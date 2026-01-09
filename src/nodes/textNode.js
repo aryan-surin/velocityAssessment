@@ -1,35 +1,32 @@
 // textNode.js
 
-import { useState } from 'react';
-import { Handle, Position } from 'reactflow';
+import { BaseNode } from './BaseNode';
+import { createNodeConfig, createHandle, createField } from './nodeConfig';
 
+/**
+ * Text Node Configuration
+ * Defines a text node with editable text content
+ */
+const textNodeConfig = createNodeConfig({
+  title: 'Text',
+  description: 'Static text or template',
+  handles: [
+    createHandle('source', 'output')
+  ],
+  fields: [
+    createField('text', 'Text', 'text', {
+      defaultValue: '{{input}}',
+      placeholder: 'Enter text or template'
+    })
+  ],
+  style: {
+    backgroundColor: '#e8f5e9'
+  }
+});
+
+/**
+ * TextNode component using BaseNode abstraction
+ */
 export const TextNode = ({ id, data }) => {
-  const [currText, setCurrText] = useState(data?.text || '{{input}}');
-
-  const handleTextChange = (e) => {
-    setCurrText(e.target.value);
-  };
-
-  return (
-    <div style={{width: 200, height: 80, border: '1px solid black'}}>
-      <div>
-        <span>Text</span>
-      </div>
-      <div>
-        <label>
-          Text:
-          <input 
-            type="text" 
-            value={currText} 
-            onChange={handleTextChange} 
-          />
-        </label>
-      </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={`${id}-output`}
-      />
-    </div>
-  );
+  return <BaseNode id={id} data={data} config={textNodeConfig} />;
 }

@@ -1,47 +1,45 @@
 // inputNode.js
 
-import { useState } from 'react';
-import { Handle, Position } from 'reactflow';
+import { BaseNode } from './BaseNode';
+import { createNodeConfig, createHandle, createField } from './nodeConfig';
 
+/**
+ * Input Node Configuration
+ * Defines an input node with name and type selection
+ */
+const inputNodeConfig = createNodeConfig({
+  title: 'Input',
+  description: 'Data input node',
+  handles: [
+    createHandle('source', 'value')
+  ],
+  fields: [
+    createField('inputName', 'Name', 'text', {
+      defaultValue: (data, id) => data?.inputName || id.replace('customInput-', 'input_'),
+      placeholder: 'Enter input name'
+    }),
+    createField('inputType', 'Type', 'select', {
+      defaultValue: 'Text',
+      options: [
+        { value: 'Text', label: 'Text' },
+        { value: 'File', label: 'File' }
+      ]
+    })
+  ],
+  style: {
+    backgroundColor: '#e3f2fd'
+  }
+});
+
+/**
+ * InputNode component using BaseNode abstraction
+ */
 export const InputNode = ({ id, data }) => {
-  const [currName, setCurrName] = useState(data?.inputName || id.replace('customInput-', 'input_'));
-  const [inputType, setInputType] = useState(data.inputType || 'Text');
-
-  const handleNameChange = (e) => {
-    setCurrName(e.target.value);
+  // Handle dynamic default value for inputName
+  const enrichedData = {
+    ...data,
+    inputName: data?.inputName || id.replace('customInput-', 'input_')
   };
 
-  const handleTypeChange = (e) => {
-    setInputType(e.target.value);
-  };
-
-  return (
-    <div style={{width: 200, height: 80, border: '1px solid black'}}>
-      <div>
-        <span>Input</span>
-      </div>
-      <div>
-        <label>
-          Name:
-          <input 
-            type="text" 
-            value={currName} 
-            onChange={handleNameChange} 
-          />
-        </label>
-        <label>
-          Type:
-          <select value={inputType} onChange={handleTypeChange}>
-            <option value="Text">Text</option>
-            <option value="File">File</option>
-          </select>
-        </label>
-      </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={`${id}-value`}
-      />
-    </div>
-  );
+  return <BaseNode id={id} data={enrichedData} config={inputNodeConfig} />;
 }
