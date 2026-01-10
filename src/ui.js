@@ -90,7 +90,7 @@ export const PipelineUI = () => {
             addNode(newNode);
           }
         },
-        [reactFlowInstance]
+        [reactFlowInstance, getNodeID, addNode]
     );
 
     const onDragOver = useCallback((event) => {
@@ -100,7 +100,7 @@ export const PipelineUI = () => {
 
     return (
         <>
-        <div ref={reactFlowWrapper} style={{width: '100wv', height: '70vh'}}>
+        <div ref={reactFlowWrapper} className="w-full h-full">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -114,10 +114,39 @@ export const PipelineUI = () => {
                 proOptions={proOptions}
                 snapGrid={[gridSize, gridSize]}
                 connectionLineType='smoothstep'
+                defaultEdgeOptions={{
+                  type: 'smoothstep',
+                  animated: true,
+                  style: { stroke: '#3b82f6', strokeWidth: 2 }
+                }}
+                className="bg-gray-50"
             >
-                <Background color="#aaa" gap={gridSize} />
-                <Controls />
-                <MiniMap />
+                <Background 
+                  color="#cbd5e1" 
+                  gap={gridSize} 
+                  variant="dots"
+                  className="bg-gradient-to-br from-blue-50 to-indigo-50"
+                />
+                <Controls 
+                  className="bg-white shadow-lg rounded-lg border border-gray-200"
+                />
+                <MiniMap 
+                  className="bg-white shadow-lg rounded-lg border border-gray-200"
+                  nodeColor={(node) => {
+                    const colorMap = {
+                      'customInput': '#dbeafe',
+                      'llm': '#fae8ff',
+                      'customOutput': '#ffedd5',
+                      'text': '#dcfce7',
+                      'filter': '#fce7f3',
+                      'conditional': '#fef9c3',
+                      'transform': '#ccfbf1',
+                      'validator': '#ede9fe',
+                      'aggregator': '#ecfccb'
+                    };
+                    return colorMap[node.type] || '#ffffff';
+                  }}
+                />
             </ReactFlow>
         </div>
         </>

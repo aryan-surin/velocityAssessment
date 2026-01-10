@@ -68,7 +68,7 @@ export const BaseNode = ({ id, data, config }) => {
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder || ''}
-              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </label>
         );
@@ -82,7 +82,7 @@ export const BaseNode = ({ id, data, config }) => {
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder || ''}
               rows={field.rows || 3}
-              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full resize-y focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </label>
         );
@@ -94,7 +94,7 @@ export const BaseNode = ({ id, data, config }) => {
             <select
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
             >
               {field.options.map(option => (
                 <option key={option.value} value={option.value}>
@@ -116,7 +116,7 @@ export const BaseNode = ({ id, data, config }) => {
               min={field.min}
               max={field.max}
               step={field.step}
-              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </label>
         );
@@ -184,20 +184,20 @@ export const BaseNode = ({ id, data, config }) => {
 
   return (
     <div 
-      className={`w-48 min-h-20 border border-black rounded px-2 py-2 text-xs ${getBackgroundClass()}`}
+      className={`w-52 min-h-20 border border-gray-200 rounded-lg px-3 py-3 text-xs shadow-lg hover:shadow-xl transition-all duration-200 ${getBackgroundClass()}`}
       style={customStyle}
     >
       {/* Render input handles (targets) */}
       {renderHandles(config.handles?.filter(h => h.type === 'target'))}
 
       {/* Node title */}
-      <div className="mb-2 font-bold border-b border-gray-300 pb-1">
-        <span className="text-sm">{config.title}</span>
+      <div className="mb-2.5 font-semibold border-b border-gray-200 pb-2">
+        <span className="text-sm text-gray-800">{config.title}</span>
       </div>
 
       {/* Node description (optional) */}
       {config.description && (
-        <div className="mb-2 text-[11px] text-gray-600 italic">
+        <div className="mb-2.5 text-[11px] text-gray-500 italic">
           <span>{config.description}</span>
         </div>
       )}

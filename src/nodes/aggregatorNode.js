@@ -11,7 +11,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField, HandlePositions } from './nodeConfig';
+import { createNodeConfig, createHandle, createField } from './nodeConfig';
 
 /**
  * Aggregator Node Configuration
