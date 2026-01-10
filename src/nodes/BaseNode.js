@@ -8,7 +8,7 @@
  * Features:
  * - Configurable handles (input/output connections)
  * - Dynamic field rendering (text inputs, selects, textareas)
- * - Customizable styling
+ * - Customizable styling with Tailwind CSS
  * - Automatic state management for fields
  * - Support for validation and error handling
  * 
@@ -61,40 +61,40 @@ export const BaseNode = ({ id, data, config }) => {
     switch (field.type) {
       case 'text':
         return (
-          <label key={field.name} style={styles.label}>
+          <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <input
               type="text"
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder || ''}
-              style={styles.input}
+              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </label>
         );
 
       case 'textarea':
         return (
-          <label key={field.name} style={styles.label}>
+          <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <textarea
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder || ''}
               rows={field.rows || 3}
-              style={styles.textarea}
+              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full resize-y focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </label>
         );
 
       case 'select':
         return (
-          <label key={field.name} style={styles.label}>
+          <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <select
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              style={styles.select}
+              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
             >
               {field.options.map(option => (
                 <option key={option.value} value={option.value}>
@@ -107,7 +107,7 @@ export const BaseNode = ({ id, data, config }) => {
 
       case 'number':
         return (
-          <label key={field.name} style={styles.label}>
+          <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <input
               type="number"
@@ -116,18 +116,19 @@ export const BaseNode = ({ id, data, config }) => {
               min={field.min}
               max={field.max}
               step={field.step}
-              style={styles.input}
+              className="px-1 py-1 text-xs border border-gray-300 rounded-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </label>
         );
 
       case 'checkbox':
         return (
-          <label key={field.name} style={styles.checkboxLabel}>
+          <label key={field.name} className="flex items-center text-xs gap-1">
             <input
               type="checkbox"
               checked={value}
               onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              className="w-3 h-3"
             />
             {field.label}
           </label>
@@ -157,32 +158,53 @@ export const BaseNode = ({ id, data, config }) => {
     ));
   };
 
-  // Merge default styles with custom styles from config
-  const containerStyle = {
-    ...styles.container,
-    ...config.style
+  // Extract custom styles from config (for backwards compatibility)
+  const customStyle = config.style || {};
+  
+  // Convert backgroundColor to Tailwind class if present
+  const getBackgroundClass = () => {
+    if (customStyle.backgroundColor) {
+      // Map common colors to Tailwind classes
+      const colorMap = {
+        '#e3f2fd': 'bg-blue-50',
+        '#e8f5e9': 'bg-green-50',
+        '#fff3e0': 'bg-orange-50',
+        '#f3e5f5': 'bg-purple-50',
+        '#e0f2f1': 'bg-teal-50',
+        '#fff9c4': 'bg-yellow-100',
+        '#fce4ec': 'bg-pink-50',
+        '#f1f8e9': 'bg-lime-50',
+        '#ede7f6': 'bg-indigo-50',
+        'white': 'bg-white'
+      };
+      return colorMap[customStyle.backgroundColor] || 'bg-white';
+    }
+    return 'bg-white';
   };
 
   return (
-    <div style={containerStyle}>
+    <div 
+      className={`w-48 min-h-20 border border-black rounded px-2 py-2 text-xs ${getBackgroundClass()}`}
+      style={customStyle}
+    >
       {/* Render input handles (targets) */}
       {renderHandles(config.handles?.filter(h => h.type === 'target'))}
 
       {/* Node title */}
-      <div style={styles.title}>
-        <span style={styles.titleText}>{config.title}</span>
+      <div className="mb-2 font-bold border-b border-gray-300 pb-1">
+        <span className="text-sm">{config.title}</span>
       </div>
 
       {/* Node description (optional) */}
       {config.description && (
-        <div style={styles.description}>
+        <div className="mb-2 text-[11px] text-gray-600 italic">
           <span>{config.description}</span>
         </div>
       )}
 
       {/* Render fields */}
       {config.fields && (
-        <div style={styles.fieldsContainer}>
+        <div className="flex flex-col gap-1.5">
           {config.fields.map(field => renderField(field))}
         </div>
       )}
@@ -191,76 +213,6 @@ export const BaseNode = ({ id, data, config }) => {
       {renderHandles(config.handles?.filter(h => h.type === 'source'))}
     </div>
   );
-};
-
-/**
- * Default styles for BaseNode components
- * These can be overridden via config.style
- */
-const styles = {
-  container: {
-    width: 200,
-    minHeight: 80,
-    border: '1px solid black',
-    borderRadius: '4px',
-    padding: '8px',
-    backgroundColor: 'white',
-    fontSize: '12px'
-  },
-  title: {
-    marginBottom: '8px',
-    fontWeight: 'bold',
-    borderBottom: '1px solid #ddd',
-    paddingBottom: '4px'
-  },
-  titleText: {
-    fontSize: '14px'
-  },
-  description: {
-    marginBottom: '8px',
-    fontSize: '11px',
-    color: '#666',
-    fontStyle: 'italic'
-  },
-  fieldsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px'
-  },
-  label: {
-    display: 'flex',
-    flexDirection: 'column',
-    fontSize: '11px',
-    gap: '2px'
-  },
-  checkboxLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '11px',
-    gap: '4px'
-  },
-  input: {
-    padding: '4px',
-    fontSize: '11px',
-    border: '1px solid #ccc',
-    borderRadius: '2px',
-    width: '100%'
-  },
-  textarea: {
-    padding: '4px',
-    fontSize: '11px',
-    border: '1px solid #ccc',
-    borderRadius: '2px',
-    width: '100%',
-    resize: 'vertical'
-  },
-  select: {
-    padding: '4px',
-    fontSize: '11px',
-    border: '1px solid #ccc',
-    borderRadius: '2px',
-    width: '100%'
-  }
 };
 
 export default BaseNode;
