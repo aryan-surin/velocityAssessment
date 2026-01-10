@@ -106,7 +106,8 @@ const normalizeField = (field) => {
     min,
     max,
     step,
-    rows
+    rows,
+    autoExpand = false
   } = field;
 
   // Validate required fields
@@ -133,7 +134,8 @@ const normalizeField = (field) => {
     label,
     type,
     defaultValue,
-    placeholder
+    placeholder,
+    autoExpand
   };
 
   // Add type-specific properties

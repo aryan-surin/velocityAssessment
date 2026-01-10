@@ -18,7 +18,7 @@
  * @param {Object} props.config - Node configuration object
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 
 /**
@@ -37,6 +37,8 @@ export const BaseNode = ({ id, data, config }) => {
   }, [config.fields, data]);
 
   const [fieldValues, setFieldValues] = useState(initialState);
+  const [nodeDimensions, setNodeDimensions] = useState({ width: 208, height: 80 });
+  const textareaRefs = useRef({});
 
   /**
    * Generic field change handler
@@ -51,6 +53,45 @@ export const BaseNode = ({ id, data, config }) => {
   }, []);
 
   /**
+   * Calculate and update node dimensions based on auto-expanding fields
+   */
+  useEffect(() => {
+    if (!config.fields) return;
+
+    const autoExpandFields = config.fields.filter(field => field.autoExpand);
+    if (autoExpandFields.length === 0) return;
+
+    let maxWidth = 208; // Minimum width (w-52)
+    let totalHeight = 80; // Minimum height (min-h-20)
+
+    autoExpandFields.forEach(field => {
+      const value = fieldValues[field.name] || '';
+      const textarea = textareaRefs.current[field.name];
+
+      if (textarea) {
+        // Calculate width based on longest line
+        const lines = value.split('\n');
+        const longestLine = lines.reduce((max, line) => 
+          line.length > max.length ? line : max, '');
+        
+        // Approximate width: 7px per character + padding
+        const estimatedWidth = Math.min(400, Math.max(208, longestLine.length * 7 + 60));
+        maxWidth = Math.max(maxWidth, estimatedWidth);
+
+        // Calculate height based on content
+        textarea.style.height = 'auto';
+        const scrollHeight = textarea.scrollHeight;
+        textarea.style.height = `${scrollHeight}px`;
+        
+        const fieldHeight = Math.min(600, Math.max(60, scrollHeight + 20));
+        totalHeight = Math.max(totalHeight, fieldHeight + 100); // Add space for title/padding
+      }
+    });
+
+    setNodeDimensions({ width: maxWidth, height: totalHeight });
+  }, [fieldValues, config.fields]);
+
+  /**
    * Render a single field based on its type
    * @param {Object} field - Field configuration object
    * @returns {JSX.Element} Rendered field component
@@ -60,6 +101,22 @@ export const BaseNode = ({ id, data, config }) => {
 
     switch (field.type) {
       case 'text':
+        // Use textarea for auto-expanding text fields
+        if (field.autoExpand) {
+          return (
+            <label key={field.name} className="flex flex-col text-xs gap-0.5">
+              {field.label}:
+              <textarea
+                ref={(el) => { textareaRefs.current[field.name] = el; }}
+                value={value}
+                onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                placeholder={field.placeholder || ''}
+                className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all overflow-hidden"
+                style={{ minHeight: '36px' }}
+              />
+            </label>
+          );
+        }
         return (
           <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
@@ -78,11 +135,13 @@ export const BaseNode = ({ id, data, config }) => {
           <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <textarea
+              ref={field.autoExpand ? (el) => { textareaRefs.current[field.name] = el; } : undefined}
               value={value}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={field.placeholder || ''}
-              rows={field.rows || 3}
-              className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              rows={field.autoExpand ? undefined : (field.rows || 3)}
+              className={`px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full ${field.autoExpand ? 'resize-none overflow-hidden' : 'resize-y'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+              style={field.autoExpand ? { minHeight: '60px' } : {}}
             />
           </label>
         );
@@ -184,8 +243,13 @@ export const BaseNode = ({ id, data, config }) => {
 
   return (
     <div 
-      className={`w-52 min-h-20 border border-gray-200 rounded-lg px-3 py-3 text-xs shadow-lg hover:shadow-xl transition-all duration-200 ${getBackgroundClass()}`}
-      style={customStyle}
+      className={`border border-gray-200 rounded-lg px-3 py-3 text-xs shadow-lg hover:shadow-xl transition-all duration-200 ${getBackgroundClass()}`}
+      style={{
+        ...customStyle,
+        width: `${nodeDimensions.width}px`,
+        minHeight: `${nodeDimensions.height}px`,
+        transition: 'width 0.2s ease-in-out, min-height 0.2s ease-in-out'
+      }}
     >
       {/* Render input handles (targets) */}
       {renderHandles(config.handles?.filter(h => h.type === 'target'))}
