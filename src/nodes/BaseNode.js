@@ -22,7 +22,7 @@
  */
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Handle, Position, useNodes } from 'reactflow';
+import { Handle, Position, useNodes, useReactFlow } from 'reactflow';
 
 /**
  * BaseNode - Generic node component with configurable handles and fields
@@ -30,6 +30,7 @@ import { Handle, Position, useNodes } from 'reactflow';
 export const BaseNode = ({ id, data, config }) => {
   // Get all nodes from React Flow
   const nodes = useNodes();
+  const { setEdges, getEdges } = useReactFlow();
 
   // Initialize state for all fields defined in config
   const initialState = useMemo(() => {
@@ -219,11 +220,12 @@ export const BaseNode = ({ id, data, config }) => {
     const { fieldName, triggerPosition } = autocomplete;
     const currentValue = fieldValues[fieldName];
     
+    // Remove all existing variables (enforce single variable per field)
+    const cleanValue = currentValue.replace(/\{\{[^}]+\}\}/g, '');
+    
     // Insert nodeId and a dot, keep cursor for field selection
-    const beforeTrigger = currentValue.substring(0, triggerPosition);
-    const afterCursor = currentValue.substring(autocomplete.cursorPosition);
-    const newValue = `${beforeTrigger}{{${nodeId}.${afterCursor}`;
-    const newCursorPos = triggerPosition + nodeId.length + 3; // {{ + nodeId + .
+    const newValue = `{{${nodeId}.`;
+    const newCursorPos = newValue.length;
     
     handleFieldChange(fieldName, newValue);
     
@@ -251,15 +253,48 @@ export const BaseNode = ({ id, data, config }) => {
    * @param {string} fieldName - Name of the output field
    */
   const handleFieldSelect = useCallback((fieldName) => {
-    const { fieldName: inputFieldName, triggerPosition, selectedNode } = autocomplete;
+    const { fieldName: inputFieldName, selectedNode } = autocomplete;
     const currentValue = fieldValues[inputFieldName];
     
-    // Replace from {{ to after the dot
-    const beforeTrigger = currentValue.substring(0, triggerPosition);
-    const afterCursor = currentValue.substring(autocomplete.cursorPosition);
-    const newValue = `${beforeTrigger}{{${selectedNode}.${fieldName}}}${afterCursor}`;
+    // Remove all existing variables and insert the new one (enforce single variable)
+    const newValue = `{{${selectedNode}.${fieldName}}}`;
+    
+    // Remove old edges connected to this field's dynamic handle
+    const oldVariables = parseVariables(currentValue);
+    if (oldVariables.length > 0) {
+      setEdges((edges) => 
+        edges.filter(edge => 
+          !oldVariables.some(v => edge.target === id && edge.targetHandle === `dynamic-${v.nodeId}`)
+        )
+      );
+    }
     
     handleFieldChange(inputFieldName, newValue);
+    
+    // Create automatic edge from selected node to current node
+    setTimeout(() => {
+      setEdges((edges) => {
+        // Check if edge already exists
+        const edgeExists = edges.some(
+          edge => edge.source === selectedNode && edge.target === id && edge.targetHandle === `dynamic-${selectedNode}`
+        );
+        
+        if (!edgeExists) {
+          const newEdge = {
+            id: `${selectedNode}-${id}-${fieldName}`,
+            source: selectedNode,
+            target: id,
+            targetHandle: `dynamic-${selectedNode}`,
+            type: 'smoothstep',
+            animated: true,
+            style: { stroke: '#3b82f6', strokeWidth: 2 }
+          };
+          return [...edges, newEdge];
+        }
+        return edges;
+      });
+    }, 100); // Small delay to ensure dynamic handle is created
+    
     setAutocomplete(prev => ({ ...prev, show: false }));
     
     // Refocus the input
@@ -267,11 +302,11 @@ export const BaseNode = ({ id, data, config }) => {
       const input = inputRefs.current[inputFieldName] || textareaRefs.current[inputFieldName];
       if (input) {
         input.focus();
-        const newCursorPos = triggerPosition + selectedNode.length + fieldName.length + 5; // {{ + nodeId + . + field + }}
+        const newCursorPos = selectedNode.length + fieldName.length + 5; // {{ + nodeId + . + field + }}
         input.setSelectionRange(newCursorPos, newCursorPos);
       }
     }, 0);
-  }, [autocomplete, fieldValues, handleFieldChange]);
+  }, [autocomplete, fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
   /**
    * Filter nodes based on autocomplete query
@@ -384,13 +419,27 @@ export const BaseNode = ({ id, data, config }) => {
   }, [fieldValues, config.fields]);
 
   /**
-   * Remove a variable from text field
+   * Remove a variable from text field and its associated edge
    */
   const removeVariable = useCallback((fieldName, variable) => {
     const currentValue = fieldValues[fieldName];
     const newValue = currentValue.replace(variable, '');
+    
+    // Parse the variable to get nodeId
+    const variables = parseVariables(variable);
+    if (variables.length > 0) {
+      const nodeIdToRemove = variables[0].nodeId;
+      
+      // Remove associated edge
+      setEdges((edges) => 
+        edges.filter(edge => 
+          !(edge.target === id && edge.targetHandle === `dynamic-${nodeIdToRemove}`)
+        )
+      );
+    }
+    
     handleFieldChange(fieldName, newValue);
-  }, [fieldValues, handleFieldChange]);
+  }, [fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
   /**
    * Render variables as tag chips below the field
