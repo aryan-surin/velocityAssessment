@@ -5,19 +5,19 @@ import ReactFlow, { Controls, Background, MiniMap } from 'reactflow';
 import { useStore } from '../../store';
 import { shallow } from 'zustand/shallow';
 import { 
-  InputNode, 
-  LLMNode, 
-  OutputNode, 
-  TextNode, 
-  FilterNode, 
-  ConditionalNode, 
-  TransformNode, 
-  ValidatorNode, 
+  InputNode,
+  LLMNode,
+  OutputNode,
+  TextNode,
+  FilterNode,
+  ConditionalNode,
+  TransformNode,
+  ValidatorNode,
   AggregatorNode,
-  createNodeConfig, 
-  createHandle, 
-  createField, 
-  createOutput 
+  createNodeConfig,
+  createHandle,
+  createField,
+  createOutput
 } from '../nodes';
 
 import 'reactflow/dist/style.css';

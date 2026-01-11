@@ -10,8 +10,8 @@
  * - Workflow branching
  */
 
-import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
+import { BaseNode } from '../BaseNode';
+import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
 /**
  * Conditional Node Configuration

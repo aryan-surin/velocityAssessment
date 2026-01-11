@@ -660,34 +660,53 @@ Expected: Alert "Pipeline is empty"
 ```
 frontend/
 ├── src/
-│   ├── nodes/
-│   │   ├── BaseNode.js          ⭐ Core node abstraction (200 lines)
-│   │   ├── nodeConfig.js        ⭐ Node configurations (150 lines)
-│   │   ├── inputNode.js         ✨ Input node (10 lines)
-│   │   ├── outputNode.js        ✨ Output node (10 lines)
-│   │   ├── llmNode.js           ✨ LLM node (10 lines)
-│   │   ├── textNode.js          ⭐ Dynamic text node (120 lines)
-│   │   ├── aggregatorNode.js    ✨ New: Aggregator (10 lines)
-│   │   ├── filterNode.js        ✨ New: Filter (10 lines)
-│   │   ├── transformNode.js     ✨ New: Transform (10 lines)
-│   │   ├── conditionalNode.js   ✨ New: Conditional (10 lines)
-│   │   └── validatorNode.js     ✨ New: Validator (10 lines)
-│   ├── toolbar.js               🎨 Styled toolbar (80 lines)
-│   ├── submit.js                ⭐ Backend integration (130 lines)
-│   ├── store.js                 📦 State management (60 lines)
-│   ├── ui.js                    🎨 Main UI component (100 lines)
-│   ├── draggableNode.js         🎨 Drag-drop logic (30 lines)
-│   ├── App.js                   🏠 Root component (50 lines)
-│   └── index.js                 🚀 Entry point
+│   ├── components/
+│   │   ├── ui/
+│   │   │   ├── Toolbar.js          ⭐ Styled toolbar (30 lines)
+│   │   │   ├── SubmitButton.js     ⭐ Backend integration (130 lines)
+│   │   │   └── index.js            📦 UI exports
+│   │   ├── common/
+│   │   │   ├── DraggableNode.js    🎨 Drag-drop logic (75 lines)
+│   │   │   └── index.js            📦 Common exports
+│   │   ├── layout/
+│   │   │   ├── PipelineUI.js       🎨 Main UI component (290 lines)
+│   │   │   └── index.js            📦 Layout exports
+│   │   ├── nodes/
+│   │   │   ├── BaseNode.js         ⭐ Core abstraction (780 lines)
+│   │   │   ├── nodeConfig.js       📦 Node configurations (258 lines)
+│   │   │   ├── inputNode.js        ✨ Input node (40 lines)
+│   │   │   ├── outputNode.js       ✨ Output node (40 lines)
+│   │   │   ├── llmNode.js          ✨ LLM node (40 lines)
+│   │   │   ├── textNode.js         ⭐ Dynamic text node (40 lines)
+│   │   │   ├── aggregatorNode.js   ✨ Aggregator node (40 lines)
+│   │   │   ├── filterNode.js       ✨ Filter node (40 lines)
+│   │   │   ├── transformNode.js    ✨ Transform node (40 lines)
+│   │   │   ├── conditionalNode.js  ✨ Conditional node (40 lines)
+│   │   │   ├── validatorNode.js    ✨ Validator node (40 lines)
+│   │   │   ├── __tests__/          🧪 Node tests
+│   │   │   └── index.js            📦 Node exports
+│   │   └── index.js                📦 Main component export
+│   ├── hooks/                      🪝 Custom React hooks
+│   ├── utils/                      🛠️ Utility functions
+│   ├── constants/                  📋 Application constants
+│   ├── store.js                    📦 State management (60 lines)
+│   ├── App.js                      🏠 Root component (50 lines)
+│   ├── index.js                    🚀 Entry point
+│   └── index.css                   🎨 Global styles
 ├── public/
-│   └── index.html
+│   ├── index.html
+│   ├── manifest.json
+│   └── robots.txt
 ├── package.json
 ├── tailwind.config.js
-└── README.md
+├── postcss.config.js
+├── README.md                       📚 Quick start guide
+├── PROJECT_EXPLANATION.md          📖 Complete documentation
+└── DELETED_FILES.md                🗑️ Cleanup manifest
 
 backend/
-├── main.py                      ⭐ FastAPI application (350 lines)
-├── requirement.txt              📦 Dependencies
+├── main.py                         ⭐ FastAPI application (350 lines)
+├── requirement.txt                 📦 Dependencies
 └── __pycache__/
 ```
 
@@ -695,8 +714,9 @@ backend/
 - ⭐ Core implementation files
 - ✨ Minimal wrapper files
 - 🎨 Styling-focused files
-- 📦 Configuration files
+- 📦 Configuration/export files
 - 🏠 Application entry files
+- 🧪 Test files
 
 ---
 

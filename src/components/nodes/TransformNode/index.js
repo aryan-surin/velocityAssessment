@@ -10,8 +10,8 @@
  * - Value transformation
  */
 
-import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
+import { BaseNode } from '../BaseNode';
+import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
 /**
  * Transform Node Configuration

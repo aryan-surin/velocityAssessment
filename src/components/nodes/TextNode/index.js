@@ -1,7 +1,17 @@
-// textNode.js
+/**
+ * Text Node
+ * 
+ * Static text or template node.
+ * Demonstrates auto-expanding text field and template capabilities.
+ * 
+ * Use Cases:
+ * - Static text content
+ * - Templates with variables
+ * - Documentation
+ */
 
-import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
+import { BaseNode } from '../BaseNode';
+import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
 /**
  * Text Node Configuration
@@ -39,3 +49,5 @@ export const TextNode = ({ id, data }) => {
   };
   return <BaseNode id={id} data={enrichedData} config={textNodeConfig} />;
 }
+
+export default TextNode;
