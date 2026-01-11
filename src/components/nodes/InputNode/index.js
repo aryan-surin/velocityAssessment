@@ -6,7 +6,8 @@ const inputNodeConfig = createNodeConfig({
   title: 'Input',
   description: 'Data input node',
   handles: [
-    createHandle('source', 'value')
+    createHandle('source', 'value'),
+    createHandle('target', 'input')  // Enable incoming connections for cycle demonstration
   ],
   fields: [
     createField('inputName', 'Name', 'text', {

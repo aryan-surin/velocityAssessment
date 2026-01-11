@@ -6,7 +6,8 @@ const outputNodeConfig = createNodeConfig({
   title: 'Output',
   description: 'Data output node',
   handles: [
-    createHandle('target', 'value')
+    createHandle('target', 'value'),
+    createHandle('source', 'output')  // Enable backward connections for cycle demonstration
   ],
   fields: [
     createField('outputName', 'Name', 'text', {
