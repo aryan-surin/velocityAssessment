@@ -4,34 +4,12 @@ import { useState } from 'react';
 import { BiRocket } from 'react-icons/bi';
 import { useStore } from '../../store';
 
-/**
- * SubmitButton Component
- * 
- * Handles the submission of the pipeline to the backend for validation.
- * Sends nodes and edges data to the /pipelines/parse endpoint and displays
- * the results (number of nodes, edges, and DAG validation) in an alert.
- * 
- * Features:
- * - Loading state during API call
- * - Error handling for network failures
- * - User-friendly alert display
- * - Validation before submission
- * 
- * @component
- * @returns {JSX.Element} Submit button with loading and error states
- */
+// Submit button for pipeline validation
 export const SubmitButton = () => {
     const [loading, setLoading] = useState(false);
     const nodes = useStore(state => state.nodes);
     const edges = useStore(state => state.edges);
 
-    /**
-     * Handles the pipeline submission to backend
-     * 
-     * @async
-     * @returns {Promise<void>}
-     * @throws {Error} When API call fails or network error occurs
-     */
     const handleSubmit = async () => {
         // Validation: Check if pipeline has at least one node
         if (nodes.length === 0) {

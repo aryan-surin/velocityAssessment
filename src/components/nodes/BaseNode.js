@@ -1,32 +1,8 @@
-/**
- * BaseNode Component
- * 
- * A reusable abstraction for creating nodes with configurable properties.
- * This component eliminates code duplication and provides a flexible
- * system for creating new node types.
- * 
- * Features:
- * - Configurable handles (input/output connections)
- * - Dynamic field rendering (text inputs, selects, textareas)
- * - Customizable styling with Tailwind CSS
- * - Automatic state management for fields
- * - Support for validation and error handling
- * - Two-step variable builder with {{ trigger
- * - Dynamic handle creation based on detected variables
- * - Variable validation and visual feedback
- * 
- * @param {Object} props - Component props
- * @param {string} props.id - Unique node identifier
- * @param {Object} props.data - Node data including configuration
- * @param {Object} props.config - Node configuration object
- */
+// Base component for all node types - handles rendering, fields, and variable detection
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Handle, Position, useNodes, useReactFlow } from 'reactflow';
 
-/**
- * BaseNode - Generic node component with configurable handles and fields
- */
 export const BaseNode = ({ id, data, config }) => {
   // Get all nodes from React Flow
   const nodes = useNodes();
@@ -218,10 +194,6 @@ export const BaseNode = ({ id, data, config }) => {
     setAutocomplete(prev => ({ ...prev, show: false }));
   }, [handleFieldChange]);
 
-  /**
-   * Handle node selection (Step 1)
-   * @param {string} nodeId - ID of the selected node
-   */
   const handleNodeSelect = useCallback((nodeId) => {
     const { fieldName, triggerPosition } = autocomplete;
     const currentValue = fieldValues[fieldName];
@@ -265,10 +237,6 @@ export const BaseNode = ({ id, data, config }) => {
     }, 0);
   }, [autocomplete, fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
-  /**
-   * Handle field selection (Step 2)
-   * @param {string} fieldName - Name of the output field
-   */
   const handleFieldSelect = useCallback((fieldName) => {
     const { fieldName: inputFieldName, selectedNode } = autocomplete;
     const currentValue = fieldValues[inputFieldName];
@@ -325,9 +293,6 @@ export const BaseNode = ({ id, data, config }) => {
     }, 0);
   }, [autocomplete, fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
-  /**
-   * Filter nodes based on autocomplete query
-   */
   const filteredNodes = useMemo(() => {
     if (!autocomplete.show || autocomplete.step !== 'node') return [];
     
@@ -347,9 +312,6 @@ export const BaseNode = ({ id, data, config }) => {
       .slice(0, 10); // Limit to 10 results
   }, [nodes, autocomplete, id]);
 
-  /**
-   * Get output fields for selected node
-   */
   const availableFields = useMemo(() => {
     if (!autocomplete.show || autocomplete.step !== 'field' || !autocomplete.selectedNode) {
       return [];
@@ -368,9 +330,6 @@ export const BaseNode = ({ id, data, config }) => {
     );
   }, [nodes, autocomplete]);
 
-  /**
-   * Close autocomplete on outside click
-   */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
@@ -384,9 +343,6 @@ export const BaseNode = ({ id, data, config }) => {
     }
   }, [autocomplete.show]);
 
-  /**
-   * Handle keyboard navigation in autocomplete
-   */
   const handleKeyDown = useCallback((e, fieldName) => {
     if (autocomplete.show && autocomplete.fieldName === fieldName) {
       if (e.key === 'Escape') {
@@ -396,9 +352,6 @@ export const BaseNode = ({ id, data, config }) => {
     }
   }, [autocomplete]);
 
-  /**
-   * Calculate and update node dimensions based on auto-expanding fields
-   */
   useEffect(() => {
     if (!config.fields) return;
 
@@ -435,9 +388,6 @@ export const BaseNode = ({ id, data, config }) => {
     setNodeDimensions({ width: maxWidth, height: totalHeight });
   }, [fieldValues, config.fields]);
 
-  /**
-   * Remove a variable from text field and its associated edge
-   */
   const removeVariable = useCallback((fieldName, variable) => {
     const currentValue = fieldValues[fieldName];
     const newValue = currentValue.replace(variable, '');
@@ -467,9 +417,6 @@ export const BaseNode = ({ id, data, config }) => {
     handleFieldChange(fieldName, newValue);
   }, [fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
-  /**
-   * Render variables as tag chips below the field
-   */
   const renderVariableTags = useCallback((text, fieldName) => {
     if (!text) return null;
     
@@ -525,11 +472,6 @@ export const BaseNode = ({ id, data, config }) => {
     );
   }, [parseVariables, nodes, removeVariable]);
 
-  /**
-   * Render a single field based on its type
-   * @param {Object} field - Field configuration object
-   * @returns {JSX.Element} Rendered field component
-   */
   const renderField = (field) => {
     const value = fieldValues[field.name];
 
@@ -645,11 +587,6 @@ export const BaseNode = ({ id, data, config }) => {
     }
   };
 
-  /**
-   * Render handle components based on configuration
-   * @param {Array} handles - Array of handle configurations
-   * @returns {Array<JSX.Element>} Array of Handle components
-   */
   const renderHandles = (handles) => {
     if (!handles) return null;
 

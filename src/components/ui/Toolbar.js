@@ -2,15 +2,7 @@
 
 import { DraggableNode } from '../common/DraggableNode';
 
-/**
- * PipelineToolbar Component
- * 
- * Displays a toolbar with draggable node types that users can drag onto the canvas.
- * Organized in a responsive grid layout with all available node types.
- * 
- * @component
- * @returns {JSX.Element} Toolbar with draggable node elements
- */
+// Toolbar with draggable nodes
 export const PipelineToolbar = () => {
     return (
         <div className="bg-white border-b border-gray-200 shadow-sm">
