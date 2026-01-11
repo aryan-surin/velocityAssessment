@@ -1,22 +1,7 @@
-/**
- * Input Node
- * 
- * Data input node for the pipeline.
- * Demonstrates dynamic default values and basic field configuration.
- * 
- * Use Cases:
- * - Accept user input
- * - File uploads
- * - External data sources
- */
-
+// Input node for pipeline data entry
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Input Node Configuration
- * Defines an input node with name and type selection
- */
 const inputNodeConfig = createNodeConfig({
   title: 'Input',
   description: 'Data input node',
@@ -45,15 +30,12 @@ const inputNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * InputNode component using BaseNode abstraction
- */
+
 export const InputNode = ({ id, data }) => {
-  // Handle dynamic default value for inputName
   const enrichedData = {
     ...data,
     inputName: data?.inputName || id.replace('customInput-', 'input_'),
-    config: inputNodeConfig  // Pass config to data for access by other nodes
+    config: inputNodeConfig
   };
 
   return <BaseNode id={id} data={enrichedData} config={inputNodeConfig} />;

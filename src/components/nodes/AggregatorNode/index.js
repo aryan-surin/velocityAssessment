@@ -1,21 +1,7 @@
-/**
- * Aggregator Node
- * 
- * Aggregates multiple inputs into a single output.
- * Demonstrates multiple input handles and aggregation logic.
- * 
- * Use Cases:
- * - Combine multiple data sources
- * - Merge results
- * - Join operations
- */
-
+// Aggregator node for combining inputs
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Aggregator Node Configuration
- */
 const aggregatorNodeConfig = createNodeConfig({
   title: 'Aggregator',
   description: 'Combine multiple inputs',
@@ -61,9 +47,6 @@ const aggregatorNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * AggregatorNode component
- */
 export const AggregatorNode = ({ id, data }) => {
   const enrichedData = {
     ...data,

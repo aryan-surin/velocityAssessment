@@ -1,22 +1,7 @@
-/**
- * Output Node
- * 
- * Data output node for the pipeline.
- * Demonstrates dynamic default values and output configuration.
- * 
- * Use Cases:
- * - Display results
- * - Export data
- * - Save to file/database
- */
-
+// Output node for pipeline results
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Output Node Configuration
- * Defines an output node with name and type selection
- */
 const outputNodeConfig = createNodeConfig({
   title: 'Output',
   description: 'Data output node',
@@ -45,9 +30,7 @@ const outputNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * OutputNode component using BaseNode abstraction
- */
+
 export const OutputNode = ({ id, data }) => {
   // Handle dynamic default value for outputName
   const enrichedData = {

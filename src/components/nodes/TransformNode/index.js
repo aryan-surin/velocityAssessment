@@ -1,21 +1,7 @@
-/**
- * Transform Node
- * 
- * Transforms input data using various operations.
- * Demonstrates textarea field type and data manipulation.
- * 
- * Use Cases:
- * - String manipulation
- * - Data formatting
- * - Value transformation
- */
-
+// Transform node for data manipulation
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Transform Node Configuration
- */
 const transformNodeConfig = createNodeConfig({
   title: 'Transform',
   description: 'Transform data',
@@ -50,9 +36,6 @@ const transformNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * TransformNode component
- */
 export const TransformNode = ({ id, data }) => {
   const enrichedData = {
     ...data,

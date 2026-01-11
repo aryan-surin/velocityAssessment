@@ -1,41 +1,6 @@
-/**
- * Node Configuration Helper
- * 
- * This module provides a helper function to create node configuration objects
- * that work with the BaseNode component. It simplifies the process of defining
- * new node types by providing a clear, declarative API.
- * 
- * Usage:
- * ```javascript
- * import { createNodeConfig } from './nodeConfig';
- * 
- * const myNodeConfig = createNodeConfig({
- *   title: 'My Node',
- *   description: 'Does something useful',
- *   handles: [
- *     { type: 'target', id: 'input' },
- *     { type: 'source', id: 'output' }
- *   ],
- *   fields: [
- *     { name: 'value', label: 'Value', type: 'text' }
- *   ]
- * });
- * ```
- */
-
+// Node configuration helpers for BaseNode
 import { Position } from 'reactflow';
 
-/**
- * Creates a node configuration object for use with BaseNode
- * 
- * @param {Object} options - Configuration options
- * @param {string} options.title - Node title displayed at the top
- * @param {string} [options.description] - Optional description text
- * @param {Array<Object>} [options.handles] - Handle configurations
- * @param {Array<Object>} [options.fields] - Field configurations
- * @param {Object} [options.style] - Custom styles to override defaults
- * @returns {Object} Node configuration object
- */
 export const createNodeConfig = (options) => {
   const {
     title,
@@ -61,12 +26,6 @@ export const createNodeConfig = (options) => {
   };
 };
 
-/**
- * Normalizes handle configuration with defaults
- * 
- * @param {Object} handle - Handle configuration
- * @returns {Object} Normalized handle configuration
- */
 const normalizeHandle = (handle) => {
   const {
     type,
@@ -91,12 +50,6 @@ const normalizeHandle = (handle) => {
   };
 };
 
-/**
- * Normalizes field configuration with defaults
- * 
- * @param {Object} field - Field configuration
- * @returns {Object} Normalized field configuration
- */
 const normalizeField = (field) => {
   const {
     name,
@@ -156,12 +109,6 @@ const normalizeField = (field) => {
   return normalizedField;
 };
 
-/**
- * Normalizes output configuration with defaults
- * 
- * @param {Object} output - Output configuration
- * @returns {Object} Normalized output configuration
- */
 const normalizeOutput = (output) => {
   const {
     name,
@@ -192,14 +139,6 @@ const normalizeOutput = (output) => {
   };
 };
 
-/**
- * Helper function to create a handle configuration
- * 
- * @param {string} type - 'source' or 'target'
- * @param {string} id - Handle ID
- * @param {Object} options - Additional options (position, style)
- * @returns {Object} Handle configuration
- */
 export const createHandle = (type, id, options = {}) => {
   return {
     type,
@@ -208,15 +147,6 @@ export const createHandle = (type, id, options = {}) => {
   };
 };
 
-/**
- * Helper function to create a field configuration
- * 
- * @param {string} name - Field name (used for state management)
- * @param {string} label - Field label (displayed to user)
- * @param {string} type - Field type (text, textarea, select, number, checkbox)
- * @param {Object} options - Additional field options
- * @returns {Object} Field configuration
- */
 export const createField = (name, label, type = 'text', options = {}) => {
   return {
     name,
@@ -226,15 +156,6 @@ export const createField = (name, label, type = 'text', options = {}) => {
   };
 };
 
-/**
- * Helper function to create an output configuration
- * 
- * @param {string} name - Output name (used for variable references)
- * @param {string} label - Output label (displayed to user)
- * @param {string} type - Output data type (string, number, array, object, boolean, any)
- * @param {string} description - Optional description of the output
- * @returns {Object} Output configuration
- */
 export const createOutput = (name, label, type = 'string', description = '') => {
   return {
     name,
@@ -244,9 +165,6 @@ export const createOutput = (name, label, type = 'string', description = '') => 
   };
 };
 
-/**
- * Predefined handle position helpers
- */
 export const HandlePositions = {
   TOP: Position.Top,
   RIGHT: Position.Right,

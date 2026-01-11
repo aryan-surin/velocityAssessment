@@ -1,22 +1,7 @@
-/**
- * Filter Node
- * 
- * Filters input data based on specified conditions.
- * Demonstrates the flexibility of the BaseNode abstraction
- * with multiple field types and configuration options.
- * 
- * Use Cases:
- * - Filter data by keyword
- * - Apply conditional logic
- * - Remove unwanted values
- */
-
+// Filter node for data filtering
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Filter Node Configuration
- */
 const filterNodeConfig = createNodeConfig({
   title: 'Filter',
   description: 'Filter data by condition',
@@ -56,9 +41,6 @@ const filterNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * FilterNode component
- */
 export const FilterNode = ({ id, data }) => {
   const enrichedData = {
     ...data,

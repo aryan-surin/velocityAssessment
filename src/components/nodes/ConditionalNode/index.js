@@ -1,21 +1,7 @@
-/**
- * Conditional Node
- * 
- * Routes data based on conditional logic.
- * Demonstrates multi-output configuration and branching logic.
- * 
- * Use Cases:
- * - If/else logic
- * - Decision trees
- * - Workflow branching
- */
-
+// Conditional node for branching logic
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Conditional Node Configuration
- */
 const conditionalNodeConfig = createNodeConfig({
   title: 'Conditional',
   description: 'Route data based on condition',
@@ -54,9 +40,6 @@ const conditionalNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * ConditionalNode component
- */
 export const ConditionalNode = ({ id, data }) => {
   const enrichedData = {
     ...data,

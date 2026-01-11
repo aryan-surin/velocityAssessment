@@ -47,7 +47,7 @@ export const BaseNode = ({ id, data, config }) => {
   const [nodeDimensions, setNodeDimensions] = useState({ width: 208, height: 80 });
   const textareaRefs = useRef({});
   
-  // Autocomplete state - Two-step process (node selection, then field selection)
+  // TODO: refactor autocomplete logic - bit messy
   const [autocomplete, setAutocomplete] = useState({
     show: false,
     step: 'node', // 'node' or 'field'
@@ -60,15 +60,8 @@ export const BaseNode = ({ id, data, config }) => {
   });
   const autocompleteRef = useRef(null);
   const inputRefs = useRef({});
-  
-  // Dynamic handles based on detected variables
   const [dynamicHandles, setDynamicHandles] = useState([]);
 
-  /**
-   * Generic field change handler
-   * @param {string} fieldName - Name of the field being updated
-   * @param {*} value - New value for the field
-   */
   const handleFieldChange = useCallback((fieldName, value) => {
     setFieldValues(prev => ({
       ...prev,
@@ -76,12 +69,7 @@ export const BaseNode = ({ id, data, config }) => {
     }));
   }, []);
 
-  /**
-   * Parse variables from text field value
-   * Supports two formats:
-   * 1. Simple: {{ variableName }} - Creates handle named "variableName"
-   * 2. Advanced: {{nodeId.outputField}} - Creates handle connected to specific node
-   */
+  // Parse {{ variable }} and {{node.field}} formats
   const parseVariables = useCallback((text) => {
     const regex = /\{\{([^}]+)\}\}/g;
     const variables = [];
@@ -97,11 +85,9 @@ export const BaseNode = ({ id, data, config }) => {
           full: match[0],
           nodeId: parts[0],
           field: parts[1],
-          index: match.index,
           type: 'advanced'
         });
       } else if (parts.length === 1 && content.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
-        // Simple format: {{ variable }} - must be valid JavaScript identifier
         variables.push({
           full: match[0],
           variableName: content,
@@ -114,45 +100,36 @@ export const BaseNode = ({ id, data, config }) => {
     return variables;
   }, []);
 
-  /**
-   * Validate variables and update dynamic handles
-   */
+  // Create handles for detected variables
   useEffect(() => {
     const allVariables = [];
     
-    // Parse all text fields for variables
     if (config.fields) {
       config.fields.forEach(field => {
-        if (field.type === 'text' || field.type === 'textarea') {
-          const value = fieldValues[field.name] || '';
-          const variables = parseVariables(value);
-          
-          variables.forEach(variable => {
-            allVariables.push({
-              ...variable,
-              fieldName: field.name
-            });
+        const value = fieldValues[field.name] || '';
+        const variables = parseVariables(value);
+        
+        variables.forEach(variable => {
+          allVariables.push({
+            ...variable,
+            fieldName: field.name
           });
-        }
+        });
       });
     }
     
     // Create dynamic handles for both simple and advanced formats
     const handleMap = new Map();
     
-    allVariables.forEach((variable) => {
+    allVariables.forEach(variable => {
       if (variable.type === 'simple') {
-        // Simple format: create handle for variable name
         handleMap.set(`var-${variable.variableName}`, {
-          type: 'target',
           id: `var-${variable.variableName}`,
           variableName: variable.variableName,
           handleType: 'simple'
         });
       } else if (variable.type === 'advanced') {
-        // Advanced format: create handle for node reference
         handleMap.set(`dynamic-${variable.nodeId}`, {
-          type: 'target',
           id: `dynamic-${variable.nodeId}`,
           nodeId: variable.nodeId,
           handleType: 'advanced'
@@ -160,7 +137,7 @@ export const BaseNode = ({ id, data, config }) => {
       }
     });
     
-    // Convert map to array and add positioning
+    // TODO: improve handle positioning algorithm
     const newHandles = Array.from(handleMap.values()).map((handle, index) => ({
       ...handle,
       position: Position.Left,
@@ -171,37 +148,32 @@ export const BaseNode = ({ id, data, config }) => {
     }));
     
     setDynamicHandles(newHandles);
+    
+    // console.log('Dynamic handles updated:', newHandles.length); // DEBUG
   }, [fieldValues, nodes, config.fields, parseVariables]);
 
-  /**
-   * Detect {{ trigger and show autocomplete dropdown
-   * @param {Event} e - Input/textarea event
-   * @param {string} fieldName - Name of the field
-   */
   const handleInputChange = useCallback((e, fieldName) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart;
     
     handleFieldChange(fieldName, value);
 
-    // Check for {{ trigger
+    // Check for {{ trigger - autocomplete logic
     const textBeforeCursor = value.substring(0, cursorPos);
     const lastBraceIndex = textBeforeCursor.lastIndexOf('{{');
     
     if (lastBraceIndex !== -1) {
       const textAfterTrigger = textBeforeCursor.substring(lastBraceIndex + 2);
       
-      // Check if we're still in an open {{ without closing }}
       const hasClosingBrace = textAfterTrigger.includes('}}');
       
       if (!hasClosingBrace) {
-        // Calculate dropdown position relative to the fields container
+        // Calculate dropdown position
         const input = e.target;
         const rect = input.getBoundingClientRect();
         const fieldsContainer = input.closest('.flex.flex-col.gap-1\\.5');
         const containerRect = fieldsContainer ? fieldsContainer.getBoundingClientRect() : rect;
         
-        // Check if we're selecting a field (has a dot)
         const dotIndex = textAfterTrigger.indexOf('.');
         
         if (dotIndex !== -1) {

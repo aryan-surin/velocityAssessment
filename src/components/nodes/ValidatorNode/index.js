@@ -1,21 +1,7 @@
-/**
- * Validator Node
- * 
- * Validates input data against specified rules.
- * Demonstrates number field type and validation logic.
- * 
- * Use Cases:
- * - Data validation
- * - Quality checks
- * - Schema validation
- */
-
+// Validator node for data validation
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createField, createOutput } from '../nodeConfig';
 
-/**
- * Validator Node Configuration
- */
 const validatorNodeConfig = createNodeConfig({
   title: 'Validator',
   description: 'Validate input data',
@@ -64,9 +50,6 @@ const validatorNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * ValidatorNode component
- */
 export const ValidatorNode = ({ id, data }) => {
   const enrichedData = {
     ...data,

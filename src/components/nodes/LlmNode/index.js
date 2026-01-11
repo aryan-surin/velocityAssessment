@@ -1,22 +1,7 @@
-/**
- * LLM Node
- * 
- * Large Language Model integration node.
- * Demonstrates multi-handle configuration for system and prompt inputs.
- * 
- * Use Cases:
- * - AI text generation
- * - Natural language processing
- * - Conversational interfaces
- */
-
+// LLM node for AI model integration
 import { BaseNode } from '../BaseNode';
 import { createNodeConfig, createHandle, createOutput } from '../nodeConfig';
 
-/**
- * LLM Node Configuration
- * Defines a Large Language Model node with multiple inputs and one output
- */
 const llmNodeConfig = createNodeConfig({
   title: 'LLM',
   description: 'Large Language Model',
@@ -40,9 +25,6 @@ const llmNodeConfig = createNodeConfig({
   }
 });
 
-/**
- * LLMNode component using BaseNode abstraction
- */
 export const LLMNode = ({ id, data }) => {
   const enrichedData = {
     ...data,
