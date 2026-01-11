@@ -15,7 +15,7 @@ const textNodeConfig = createNodeConfig({
   ],
   fields: [
     createField('text', 'Text', 'text', {
-      defaultValue: '{{input}}',
+      defaultValue: '',
       placeholder: 'Enter text or template',
       autoExpand: true
     })

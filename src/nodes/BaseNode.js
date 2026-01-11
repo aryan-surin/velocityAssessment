@@ -384,6 +384,60 @@ export const BaseNode = ({ id, data, config }) => {
   }, [fieldValues, config.fields]);
 
   /**
+   * Remove a variable from text field
+   */
+  const removeVariable = useCallback((fieldName, variable) => {
+    const currentValue = fieldValues[fieldName];
+    const newValue = currentValue.replace(variable, '');
+    handleFieldChange(fieldName, newValue);
+  }, [fieldValues, handleFieldChange]);
+
+  /**
+   * Render variables as tag chips below the field
+   */
+  const renderVariableTags = useCallback((text, fieldName) => {
+    if (!text) return null;
+    
+    const variables = parseVariables(text);
+    if (variables.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {variables.map((variable, idx) => {
+          const referencedNode = nodes.find(n => n.id === variable.nodeId);
+          const isValid = referencedNode && 
+            referencedNode.data?.config?.outputs?.some(out => out.name === variable.field);
+          
+          return (
+            <span
+              key={`var-${idx}`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                isValid 
+                  ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                  : 'bg-red-100 text-red-700 border border-red-300'
+              }`}
+            >
+              <span>{`${variable.nodeId}.${variable.field}`}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeVariable(fieldName, variable.full);
+                }}
+                className="hover:bg-white/50 rounded-full p-0.5 transition-colors"
+                title="Remove variable"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }, [parseVariables, nodes, removeVariable]);
+
+  /**
    * Render a single field based on its type
    * @param {Object} field - Field configuration object
    * @returns {JSX.Element} Rendered field component
@@ -410,6 +464,7 @@ export const BaseNode = ({ id, data, config }) => {
                 className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all overflow-hidden"
                 style={{ minHeight: '36px' }}
               />
+              {renderVariableTags(value, field.name)}
             </label>
           );
         }
@@ -425,6 +480,7 @@ export const BaseNode = ({ id, data, config }) => {
               placeholder={field.placeholder || ''}
               className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
+            {renderVariableTags(value, field.name)}
           </label>
         );
 
@@ -443,8 +499,9 @@ export const BaseNode = ({ id, data, config }) => {
               placeholder={field.placeholder || ''}
               rows={field.autoExpand ? undefined : (field.rows || 3)}
               className={`px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full ${field.autoExpand ? 'resize-none overflow-hidden' : 'resize-y'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-              style={field.autoExpand ? { minHeight: '60px' } : {}}
+              style={field.autoExpand ? { minHeight: '60px' } : undefined}
             />
+            {renderVariableTags(value, field.name)}
           </label>
         );
 

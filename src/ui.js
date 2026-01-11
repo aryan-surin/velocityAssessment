@@ -82,7 +82,7 @@ const nodeConfigs = {
     handles: [createHandle('source', 'output')],
     fields: [
       createField('text', 'Text', 'text', {
-        defaultValue: '{{input}}',
+        defaultValue: '',
         placeholder: 'Enter text or template',
         autoExpand: true
       })

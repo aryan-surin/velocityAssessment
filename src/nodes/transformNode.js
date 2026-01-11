@@ -35,7 +35,7 @@ const transformNodeConfig = createNodeConfig({
       ]
     }),
     createField('template', 'Template/Pattern', 'textarea', {
-      defaultValue: 'Result: {{input}}',
+      defaultValue: 'Result: ',
       placeholder: 'Enter template or pattern',
       rows: 3
     })
