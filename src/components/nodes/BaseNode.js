@@ -78,7 +78,9 @@ export const BaseNode = ({ id, data, config }) => {
 
   /**
    * Parse variables from text field value
-   * Format: {{nodeId.outputField}}
+   * Supports two formats:
+   * 1. Simple: {{ variableName }} - Creates handle named "variableName"
+   * 2. Advanced: {{nodeId.outputField}} - Creates handle connected to specific node
    */
   const parseVariables = useCallback((text) => {
     const regex = /\{\{([^}]+)\}\}/g;
@@ -88,12 +90,23 @@ export const BaseNode = ({ id, data, config }) => {
     while ((match = regex.exec(text)) !== null) {
       const content = match[1].trim();
       const parts = content.split('.');
+      
       if (parts.length === 2) {
+        // Advanced format: {{nodeId.field}}
         variables.push({
           full: match[0],
           nodeId: parts[0],
           field: parts[1],
-          index: match.index
+          index: match.index,
+          type: 'advanced'
+        });
+      } else if (parts.length === 1 && content.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+        // Simple format: {{ variable }} - must be valid JavaScript identifier
+        variables.push({
+          full: match[0],
+          variableName: content,
+          index: match.index,
+          type: 'simple'
         });
       }
     }
@@ -124,15 +137,36 @@ export const BaseNode = ({ id, data, config }) => {
       });
     }
     
-    // Create dynamic handles for unique node references
-    const uniqueNodeIds = [...new Set(allVariables.map(v => v.nodeId))];
-    const newHandles = uniqueNodeIds.map((nodeId, index) => ({
-      type: 'target',
-      id: `dynamic-${nodeId}`,
+    // Create dynamic handles for both simple and advanced formats
+    const handleMap = new Map();
+    
+    allVariables.forEach((variable) => {
+      if (variable.type === 'simple') {
+        // Simple format: create handle for variable name
+        handleMap.set(`var-${variable.variableName}`, {
+          type: 'target',
+          id: `var-${variable.variableName}`,
+          variableName: variable.variableName,
+          handleType: 'simple'
+        });
+      } else if (variable.type === 'advanced') {
+        // Advanced format: create handle for node reference
+        handleMap.set(`dynamic-${variable.nodeId}`, {
+          type: 'target',
+          id: `dynamic-${variable.nodeId}`,
+          nodeId: variable.nodeId,
+          handleType: 'advanced'
+        });
+      }
+    });
+    
+    // Convert map to array and add positioning
+    const newHandles = Array.from(handleMap.values()).map((handle, index) => ({
+      ...handle,
       position: Position.Left,
       style: { 
         top: `${30 + (index * 20)}%`,
-        background: '#3b82f6' 
+        background: handle.handleType === 'simple' ? '#10b981' : '#3b82f6' 
       }
     }));
     
@@ -436,17 +470,26 @@ export const BaseNode = ({ id, data, config }) => {
     const currentValue = fieldValues[fieldName];
     const newValue = currentValue.replace(variable, '');
     
-    // Parse the variable to get nodeId
+    // Parse the variable to get handle ID
     const variables = parseVariables(variable);
     if (variables.length > 0) {
-      const nodeIdToRemove = variables[0].nodeId;
+      const varData = variables[0];
+      let handleIdToRemove;
+      
+      if (varData.type === 'simple') {
+        handleIdToRemove = `var-${varData.variableName}`;
+      } else if (varData.type === 'advanced') {
+        handleIdToRemove = `dynamic-${varData.nodeId}`;
+      }
       
       // Remove associated edge
-      setEdges((edges) => 
-        edges.filter(edge => 
-          !(edge.target === id && edge.targetHandle === `dynamic-${nodeIdToRemove}`)
-        )
-      );
+      if (handleIdToRemove) {
+        setEdges((edges) => 
+          edges.filter(edge => 
+            !(edge.target === id && edge.targetHandle === handleIdToRemove)
+          )
+        );
+      }
     }
     
     handleFieldChange(fieldName, newValue);
@@ -464,20 +507,33 @@ export const BaseNode = ({ id, data, config }) => {
     return (
       <div className="flex flex-wrap gap-1 mt-1">
         {variables.map((variable, idx) => {
-          const referencedNode = nodes.find(n => n.id === variable.nodeId);
-          const isValid = referencedNode && 
-            referencedNode.data?.config?.outputs?.some(out => out.name === variable.field);
+          let isValid = true;
+          let displayText = '';
+          let colorClass = '';
+          
+          if (variable.type === 'simple') {
+            // Simple variable format: {{ variableName }}
+            displayText = variable.variableName;
+            isValid = true; // Simple variables are always valid if they match pattern
+            colorClass = 'bg-green-100 text-green-700 border border-green-300';
+          } else if (variable.type === 'advanced') {
+            // Advanced node reference format: {{nodeId.field}}
+            displayText = `${variable.nodeId}.${variable.field}`;
+            const referencedNode = nodes.find(n => n.id === variable.nodeId);
+            isValid = referencedNode && 
+              referencedNode.data?.config?.outputs?.some(out => out.name === variable.field);
+            colorClass = isValid 
+              ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+              : 'bg-red-100 text-red-700 border border-red-300';
+          }
           
           return (
             <span
               key={`var-${idx}`}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                isValid 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-300' 
-                  : 'bg-red-100 text-red-700 border border-red-300'
-              }`}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${colorClass}`}
+              title={variable.type === 'simple' ? 'Simple variable' : 'Node reference'}
             >
-              <span>{`${variable.nodeId}.${variable.field}`}</span>
+              <span>{displayText}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

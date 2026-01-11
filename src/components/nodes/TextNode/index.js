@@ -2,12 +2,17 @@
  * Text Node
  * 
  * Static text or template node.
- * Demonstrates auto-expanding text field and template capabilities.
+ * Supports variable insertion with {{ variableName }} syntax.
+ * Variables create input handles automatically on the left side.
  * 
  * Use Cases:
  * - Static text content
- * - Templates with variables
- * - Documentation
+ * - Templates with variables (e.g., "Hello {{ name }}")
+ * - Dynamic text generation
+ * 
+ * Variable Formats Supported:
+ * - Simple: {{ variable }} - Creates handle named "variable"
+ * - Advanced: {{nodeId.field}} - References specific node output
  */
 
 import { BaseNode } from '../BaseNode';
@@ -26,7 +31,7 @@ const textNodeConfig = createNodeConfig({
   fields: [
     createField('text', 'Text', 'text', {
       defaultValue: '',
-      placeholder: 'Enter text or template',
+      placeholder: 'Type {{ variable }} to create input handles',
       autoExpand: true
     })
   ],
