@@ -12,10 +12,7 @@ import {
   BiNetworkChart 
 } from 'react-icons/bi';
 
-/**
- * Icon mapping for different node types
- * Maps node type identifiers to their corresponding React Icon components
- */
+// Icon mapping for node types
 const iconMap = {
   'customInput': BiData,
   'llm': BiCodeAlt,
@@ -28,29 +25,8 @@ const iconMap = {
   'aggregator': BiNetworkChart
 };
 
-/**
- * DraggableNode Component
- * 
- * Renders a draggable node element that can be dragged onto the React Flow canvas.
- * Includes visual feedback for drag operations and displays an icon with label.
- * 
- * @component
- * @param {Object} props - Component props
- * @param {string} props.type - The type of node (matches keys in iconMap)
- * @param {string} props.label - The display label for the node
- * @returns {JSX.Element} Draggable node element
- * 
- * @example
- * <DraggableNode type="customInput" label="Input" />
- */
+// Draggable node component for toolbar
 export const DraggableNode = ({ type, label }) => {
-    /**
-     * Handles the drag start event
-     * Sets up the data transfer and cursor styling
-     * 
-     * @param {DragEvent} event - The drag event
-     * @param {string} nodeType - The type of node being dragged
-     */
     const onDragStart = (event, nodeType) => {
       const appData = { nodeType };
       event.target.style.cursor = 'grabbing';
@@ -58,17 +34,10 @@ export const DraggableNode = ({ type, label }) => {
       event.dataTransfer.effectAllowed = 'move';
     };
 
-    /**
-     * Handles the drag end event
-     * Resets the cursor styling
-     * 
-     * @param {DragEvent} event - The drag event
-     */
     const onDragEnd = (event) => {
       event.target.style.cursor = 'grab';
     };
 
-    // Get the appropriate icon or default to code icon
     const Icon = iconMap[type] || BiCodeAlt;
   
     return (

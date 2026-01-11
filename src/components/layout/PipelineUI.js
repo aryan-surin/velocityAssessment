@@ -22,10 +22,7 @@ import {
 
 import 'reactflow/dist/style.css';
 
-/**
- * Node configurations for initial data
- * Contains default configuration for all node types
- */
+// Node configurations for initial data
 const nodeConfigs = {
   customInput: createNodeConfig({
     title: 'Input',
@@ -177,14 +174,10 @@ const nodeConfigs = {
   })
 };
 
-// React Flow configuration
 const gridSize = 20;
 const proOptions = { hideAttribution: true };
 
-/**
- * Node type mapping for React Flow
- * Maps node type strings to their corresponding React components
- */
+// Node type mapping
 const nodeTypes = {
   customInput: InputNode,
   llm: LLMNode,
@@ -197,10 +190,7 @@ const nodeTypes = {
   aggregator: AggregatorNode,
 };
 
-/**
- * Zustand store selector
- * Optimized selector to prevent unnecessary re-renders
- */
+// Store selector
 const selector = (state) => ({
   nodes: state.nodes,
   edges: state.edges,
@@ -211,22 +201,7 @@ const selector = (state) => ({
   onConnect: state.onConnect,
 });
 
-/**
- * PipelineUI Component
- * 
- * Main canvas component for the pipeline builder.
- * Handles drag-and-drop operations, node creation, and connection management.
- * 
- * Features:
- * - Drag-and-drop node creation
- * - Visual edge connections
- * - Background grid with snap
- * - Minimap for navigation
- * - Zoom and pan controls
- * 
- * @component
- * @returns {JSX.Element} React Flow canvas with pipeline functionality
- */
+// Main pipeline canvas component
 export const PipelineUI = () => {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -240,13 +215,6 @@ export const PipelineUI = () => {
       onConnect
     } = useStore(selector, shallow);
 
-    /**
-     * Generates initial node data based on node type
-     * 
-     * @param {string} nodeID - Unique identifier for the node
-     * @param {string} type - Node type identifier
-     * @returns {Object} Initial node data object
-     */
     const getInitNodeData = (nodeID, type) => {
       let nodeData = { 
         id: nodeID, 
@@ -256,12 +224,6 @@ export const PipelineUI = () => {
       return nodeData;
     };
 
-    /**
-     * Handles drop event when dragging nodes onto canvas
-     * Creates a new node at the drop position
-     * 
-     * @param {DragEvent} event - Drop event
-     */
     const onDrop = useCallback(
         (event) => {
           event.preventDefault();
@@ -296,12 +258,6 @@ export const PipelineUI = () => {
         [reactFlowInstance, getNodeID, addNode]
     );
 
-    /**
-     * Handles drag over event
-     * Enables drop functionality on the canvas
-     * 
-     * @param {DragEvent} event - Drag over event
-     */
     const onDragOver = useCallback((event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
