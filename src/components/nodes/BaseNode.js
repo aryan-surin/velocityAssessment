@@ -1,12 +1,16 @@
 // Base component for all node types - handles rendering, fields, and variable detection
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Handle, Position, useNodes, useReactFlow } from 'reactflow';
+import { Handle, Position, useNodes, useReactFlow, useUpdateNodeInternals } from 'reactflow';
 
 export const BaseNode = ({ id, data, config }) => {
   // Get all nodes from React Flow
   const nodes = useNodes();
   const { setEdges, getEdges } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
+  
+  // Ref to track previous handle count to prevent infinite loops
+  const prevHandleCountRef = useRef(0);
 
   // Initialize state for all fields defined in config
   const initialState = useMemo(() => {
@@ -125,8 +129,22 @@ export const BaseNode = ({ id, data, config }) => {
     
     setDynamicHandles(newHandles);
     
+    // Force ReactFlow to re-register handles after dynamic creation
+    // Only update if handle count changed to prevent infinite loops
+    if (newHandles.length > 0 && newHandles.length !== prevHandleCountRef.current) {
+      prevHandleCountRef.current = newHandles.length;
+      setTimeout(() => {
+        updateNodeInternals(id);
+      }, 50);
+    } else if (newHandles.length === 0 && prevHandleCountRef.current !== 0) {
+      prevHandleCountRef.current = 0;
+      setTimeout(() => {
+        updateNodeInternals(id);
+      }, 50);
+    }
+    
     // console.log('Dynamic handles updated:', newHandles.length); // DEBUG
-  }, [fieldValues, nodes, config.fields, parseVariables]);
+  }, [fieldValues, nodes, config.fields, parseVariables, id, updateNodeInternals]);
 
   const handleInputChange = useCallback((e, fieldName) => {
     const value = e.target.value;

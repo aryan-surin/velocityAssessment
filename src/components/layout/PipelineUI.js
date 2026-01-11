@@ -263,6 +263,13 @@ export const PipelineUI = () => {
         event.dataTransfer.dropEffect = 'move';
     }, []);
 
+    // Custom connection validator - allows all connections including to dynamic handles
+    // This enables manual connections to handles created by {{ variable }} syntax
+    const isValidConnection = useCallback((connection) => {
+        // Allow all connections for comprehensive testing and flexibility
+        return true;
+    }, []);
+
     return (
         <div ref={reactFlowWrapper} className="w-full h-full">
             <ReactFlow
@@ -271,6 +278,7 @@ export const PipelineUI = () => {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                isValidConnection={isValidConnection}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onInit={setReactFlowInstance}
