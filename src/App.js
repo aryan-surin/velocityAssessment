@@ -1,6 +1,4 @@
-import { PipelineToolbar } from './toolbar';
-import { PipelineUI } from './ui';
-import { SubmitButton } from './submit';
+import { PipelineToolbar, PipelineUI, SubmitButton } from './components';
 import { BiNetworkChart } from 'react-icons/bi';
 
 function App() {
