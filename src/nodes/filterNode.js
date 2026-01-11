@@ -12,7 +12,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Filter Node Configuration
@@ -46,6 +46,10 @@ const filterNodeConfig = createNodeConfig({
       defaultValue: false
     })
   ],
+  outputs: [
+    createOutput('passed', 'Passed Filter', 'any', 'Data that passed filter'),
+    createOutput('filtered', 'Filtered Out', 'any', 'Data that was filtered out')
+  ],
   style: {
     backgroundColor: '#fce4ec',
     minHeight: 120
@@ -56,7 +60,11 @@ const filterNodeConfig = createNodeConfig({
  * FilterNode component
  */
 export const FilterNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={filterNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: filterNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={filterNodeConfig} />;
 };
 
 export default FilterNode;

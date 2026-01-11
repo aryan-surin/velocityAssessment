@@ -1,7 +1,7 @@
 // outputNode.js
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Output Node Configuration
@@ -26,6 +26,10 @@ const outputNodeConfig = createNodeConfig({
       ]
     })
   ],
+  outputs: [
+    createOutput('result', 'Result', 'any', 'Final output result'),
+    createOutput('value', 'Value', 'any', 'Output value')
+  ],
   style: {
     backgroundColor: '#fff3e0'
   }
@@ -38,7 +42,8 @@ export const OutputNode = ({ id, data }) => {
   // Handle dynamic default value for outputName
   const enrichedData = {
     ...data,
-    outputName: data?.outputName || id.replace('customOutput-', 'output_')
+    outputName: data?.outputName || id.replace('customOutput-', 'output_'),
+    config: outputNodeConfig
   };
 
   return <BaseNode id={id} data={enrichedData} config={outputNodeConfig} />;

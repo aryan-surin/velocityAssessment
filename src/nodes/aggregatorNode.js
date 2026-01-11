@@ -11,7 +11,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Aggregator Node Configuration
@@ -51,6 +51,10 @@ const aggregatorNodeConfig = createNodeConfig({
       defaultValue: true
     })
   ],
+  outputs: [
+    createOutput('output', 'Aggregated Output', 'any', 'Combined result from all inputs'),
+    createOutput('result', 'Result', 'any', 'Aggregation result')
+  ],
   style: {
     backgroundColor: '#f1f8e9',
     minHeight: 140
@@ -61,7 +65,11 @@ const aggregatorNodeConfig = createNodeConfig({
  * AggregatorNode component
  */
 export const AggregatorNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={aggregatorNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: aggregatorNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={aggregatorNodeConfig} />;
 };
 
 export default AggregatorNode;

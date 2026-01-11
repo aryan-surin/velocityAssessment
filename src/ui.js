@@ -15,8 +15,162 @@ import { ConditionalNode } from './nodes/conditionalNode';
 import { TransformNode } from './nodes/transformNode';
 import { ValidatorNode } from './nodes/validatorNode';
 import { AggregatorNode } from './nodes/aggregatorNode';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodes/nodeConfig';
 
 import 'reactflow/dist/style.css';
+
+// Node configurations for initial data
+const nodeConfigs = {
+  customInput: createNodeConfig({
+    title: 'Input',
+    description: 'Data input node',
+    handles: [createHandle('source', 'value')],
+    fields: [
+      createField('inputName', 'Name', 'text', { placeholder: 'Enter input name' }),
+      createField('inputType', 'Type', 'select', {
+        defaultValue: 'Text',
+        options: [
+          { value: 'Text', label: 'Text' },
+          { value: 'File', label: 'File' }
+        ]
+      })
+    ],
+    outputs: [
+      createOutput('text', 'Text Output', 'string', 'Text content from input'),
+      createOutput('value', 'Value', 'any', 'Raw input value')
+    ],
+    style: { backgroundColor: '#e3f2fd' }
+  }),
+  llm: createNodeConfig({
+    title: 'LLM',
+    description: 'Large Language Model',
+    handles: [
+      createHandle('target', 'system', { style: { top: `${100/3}%` } }),
+      createHandle('target', 'prompt', { style: { top: `${200/3}%` } }),
+      createHandle('source', 'response')
+    ],
+    fields: [],
+    outputs: [
+      createOutput('response', 'Response', 'string', 'LLM generated response'),
+      createOutput('text', 'Text Output', 'string', 'Response text content')
+    ],
+    style: { backgroundColor: '#f3e5f5', minHeight: 100 }
+  }),
+  customOutput: createNodeConfig({
+    title: 'Output',
+    description: 'Data output node',
+    handles: [createHandle('target', 'value')],
+    fields: [
+      createField('outputName', 'Name', 'text', { placeholder: 'Enter output name' }),
+      createField('outputType', 'Type', 'select', {
+        defaultValue: 'Text',
+        options: [
+          { value: 'Text', label: 'Text' },
+          { value: 'Image', label: 'Image' }
+        ]
+      })
+    ],
+    outputs: [
+      createOutput('result', 'Result', 'any', 'Final output result'),
+      createOutput('value', 'Value', 'any', 'Output value')
+    ],
+    style: { backgroundColor: '#fff3e0' }
+  }),
+  text: createNodeConfig({
+    title: 'Text',
+    description: 'Static text or template',
+    handles: [createHandle('source', 'output')],
+    fields: [
+      createField('text', 'Text', 'text', {
+        defaultValue: '{{input}}',
+        placeholder: 'Enter text or template',
+        autoExpand: true
+      })
+    ],
+    outputs: [
+      createOutput('text', 'Text Output', 'string', 'Processed text content'),
+      createOutput('output', 'Output', 'string', 'Final output text')
+    ],
+    style: { backgroundColor: '#e8f5e9' }
+  }),
+  filter: createNodeConfig({
+    title: 'Filter',
+    description: 'Filter data by condition',
+    handles: [
+      createHandle('target', 'input'),
+      createHandle('source', 'passed'),
+      createHandle('source', 'filtered', { style: { top: '75%' } })
+    ],
+    fields: [],
+    outputs: [
+      createOutput('passed', 'Passed Filter', 'any', 'Data that passed filter'),
+      createOutput('filtered', 'Filtered Out', 'any', 'Data that was filtered out')
+    ],
+    style: { backgroundColor: '#fce4ec' }
+  }),
+  conditional: createNodeConfig({
+    title: 'Conditional',
+    description: 'Route data based on condition',
+    handles: [
+      createHandle('target', 'input'),
+      createHandle('source', 'true', { style: { top: '40%' } }),
+      createHandle('source', 'false', { style: { top: '70%' } })
+    ],
+    fields: [],
+    outputs: [
+      createOutput('true', 'True Branch', 'any', 'Data when condition is true'),
+      createOutput('false', 'False Branch', 'any', 'Data when condition is false')
+    ],
+    style: { backgroundColor: '#fff9c4' }
+  }),
+  transform: createNodeConfig({
+    title: 'Transform',
+    description: 'Transform data',
+    handles: [
+      createHandle('target', 'input'),
+      createHandle('source', 'output')
+    ],
+    fields: [],
+    outputs: [
+      createOutput('output', 'Transformed Output', 'string', 'Transformed data result'),
+      createOutput('text', 'Text Result', 'string', 'Transformed text')
+    ],
+    style: { backgroundColor: '#e1f5fe' }
+  }),
+  validator: createNodeConfig({
+    title: 'Validator',
+    description: 'Validate input data',
+    handles: [
+      createHandle('target', 'input'),
+      createHandle('source', 'valid', { style: { top: '40%' } }),
+      createHandle('source', 'invalid', { style: { top: '70%' } })
+    ],
+    fields: [],
+    outputs: [
+      createOutput('valid', 'Valid Data', 'any', 'Data that passed validation'),
+      createOutput('invalid', 'Invalid Data', 'any', 'Data that failed validation'),
+      createOutput('result', 'Validation Result', 'boolean', 'Boolean validation result')
+    ],
+    style: { backgroundColor: '#e8eaf6' }
+  }),
+  aggregator: createNodeConfig({
+    title: 'Aggregator',
+    description: 'Combine multiple inputs',
+    handles: [
+      createHandle('target', 'input1', { style: { top: '25%' } }),
+      createHandle('target', 'input2', { style: { top: '50%' } }),
+      createHandle('target', 'input3', { style: { top: '75%' } }),
+      createHandle('source', 'output')
+    ],
+    fields: [],
+    outputs: [
+      createOutput('output', 'Aggregated Output', 'any', 'Combined result from all inputs'),
+      createOutput('result', 'Result', 'any', 'Aggregation result')
+    ],
+    style: { backgroundColor: '#f1f8e9' }
+  })
+};
+
 
 const gridSize = 20;
 const proOptions = { hideAttribution: true };
@@ -56,7 +210,11 @@ export const PipelineUI = () => {
     } = useStore(selector, shallow);
 
     const getInitNodeData = (nodeID, type) => {
-      let nodeData = { id: nodeID, nodeType: `${type}` };
+      let nodeData = { 
+        id: nodeID, 
+        nodeType: `${type}`,
+        config: nodeConfigs[type] || {}
+      };
       return nodeData;
     }
 

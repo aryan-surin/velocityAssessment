@@ -42,6 +42,7 @@ export const createNodeConfig = (options) => {
     description,
     handles = [],
     fields = [],
+    outputs = [],
     style = {}
   } = options;
 
@@ -55,6 +56,7 @@ export const createNodeConfig = (options) => {
     description,
     handles: handles.map(handle => normalizeHandle(handle)),
     fields: fields.map(field => normalizeField(field)),
+    outputs: outputs.map(output => normalizeOutput(output)),
     style
   };
 };
@@ -155,6 +157,42 @@ const normalizeField = (field) => {
 };
 
 /**
+ * Normalizes output configuration with defaults
+ * 
+ * @param {Object} output - Output configuration
+ * @returns {Object} Normalized output configuration
+ */
+const normalizeOutput = (output) => {
+  const {
+    name,
+    label,
+    type = 'string',
+    description = ''
+  } = output;
+
+  // Validate required fields
+  if (!name) {
+    throw new Error('Output configuration must include a name');
+  }
+  if (!label) {
+    throw new Error('Output configuration must include a label');
+  }
+
+  // Validate output type
+  const validTypes = ['string', 'number', 'array', 'object', 'boolean', 'any'];
+  if (!validTypes.includes(type)) {
+    throw new Error(`Invalid output type: ${type}. Must be one of: ${validTypes.join(', ')}`);
+  }
+
+  return {
+    name,
+    label,
+    type,
+    description
+  };
+};
+
+/**
  * Helper function to create a handle configuration
  * 
  * @param {string} type - 'source' or 'target'
@@ -185,6 +223,24 @@ export const createField = (name, label, type = 'text', options = {}) => {
     label,
     type,
     ...options
+  };
+};
+
+/**
+ * Helper function to create an output configuration
+ * 
+ * @param {string} name - Output name (used for variable references)
+ * @param {string} label - Output label (displayed to user)
+ * @param {string} type - Output data type (string, number, array, object, boolean, any)
+ * @param {string} description - Optional description of the output
+ * @returns {Object} Output configuration
+ */
+export const createOutput = (name, label, type = 'string', description = '') => {
+  return {
+    name,
+    label,
+    type,
+    description
   };
 };
 

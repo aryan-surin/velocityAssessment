@@ -11,6 +11,9 @@
  * - Customizable styling with Tailwind CSS
  * - Automatic state management for fields
  * - Support for validation and error handling
+ * - Two-step variable builder with {{ trigger
+ * - Dynamic handle creation based on detected variables
+ * - Variable validation and visual feedback
  * 
  * @param {Object} props - Component props
  * @param {string} props.id - Unique node identifier
@@ -19,12 +22,15 @@
  */
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useNodes } from 'reactflow';
 
 /**
  * BaseNode - Generic node component with configurable handles and fields
  */
 export const BaseNode = ({ id, data, config }) => {
+  // Get all nodes from React Flow
+  const nodes = useNodes();
+
   // Initialize state for all fields defined in config
   const initialState = useMemo(() => {
     const state = {};
@@ -39,6 +45,23 @@ export const BaseNode = ({ id, data, config }) => {
   const [fieldValues, setFieldValues] = useState(initialState);
   const [nodeDimensions, setNodeDimensions] = useState({ width: 208, height: 80 });
   const textareaRefs = useRef({});
+  
+  // Autocomplete state - Two-step process (node selection, then field selection)
+  const [autocomplete, setAutocomplete] = useState({
+    show: false,
+    step: 'node', // 'node' or 'field'
+    fieldName: null,
+    selectedNode: null,
+    query: '',
+    cursorPosition: 0,
+    triggerPosition: 0,
+    dropdownPosition: { top: 0, left: 0 }
+  });
+  const autocompleteRef = useRef(null);
+  const inputRefs = useRef({});
+  
+  // Dynamic handles based on detected variables
+  const [dynamicHandles, setDynamicHandles] = useState([]);
 
   /**
    * Generic field change handler
@@ -51,6 +74,275 @@ export const BaseNode = ({ id, data, config }) => {
       [fieldName]: value
     }));
   }, []);
+
+  /**
+   * Parse variables from text field value
+   * Format: {{nodeId.outputField}}
+   */
+  const parseVariables = useCallback((text) => {
+    const regex = /\{\{([^}]+)\}\}/g;
+    const variables = [];
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      const content = match[1].trim();
+      const parts = content.split('.');
+      if (parts.length === 2) {
+        variables.push({
+          full: match[0],
+          nodeId: parts[0],
+          field: parts[1],
+          index: match.index
+        });
+      }
+    }
+    
+    return variables;
+  }, []);
+
+  /**
+   * Validate variables and update dynamic handles
+   */
+  useEffect(() => {
+    const allVariables = [];
+    
+    // Parse all text fields for variables
+    if (config.fields) {
+      config.fields.forEach(field => {
+        if (field.type === 'text' || field.type === 'textarea') {
+          const value = fieldValues[field.name] || '';
+          const variables = parseVariables(value);
+          
+          variables.forEach(variable => {
+            allVariables.push({
+              ...variable,
+              fieldName: field.name
+            });
+          });
+        }
+      });
+    }
+    
+    // Create dynamic handles for unique node references
+    const uniqueNodeIds = [...new Set(allVariables.map(v => v.nodeId))];
+    const newHandles = uniqueNodeIds.map((nodeId, index) => ({
+      type: 'target',
+      id: `dynamic-${nodeId}`,
+      position: Position.Left,
+      style: { 
+        top: `${30 + (index * 20)}%`,
+        background: '#3b82f6' 
+      }
+    }));
+    
+    setDynamicHandles(newHandles);
+  }, [fieldValues, nodes, config.fields, parseVariables]);
+
+  /**
+   * Detect {{ trigger and show autocomplete dropdown
+   * @param {Event} e - Input/textarea event
+   * @param {string} fieldName - Name of the field
+   */
+  const handleInputChange = useCallback((e, fieldName) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    
+    handleFieldChange(fieldName, value);
+
+    // Check for {{ trigger
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastBraceIndex = textBeforeCursor.lastIndexOf('{{');
+    
+    if (lastBraceIndex !== -1) {
+      const textAfterTrigger = textBeforeCursor.substring(lastBraceIndex + 2);
+      
+      // Check if we're still in an open {{ without closing }}
+      const hasClosingBrace = textAfterTrigger.includes('}}');
+      
+      if (!hasClosingBrace) {
+        // Calculate dropdown position relative to the fields container
+        const input = e.target;
+        const rect = input.getBoundingClientRect();
+        const fieldsContainer = input.closest('.flex.flex-col.gap-1\\.5');
+        const containerRect = fieldsContainer ? fieldsContainer.getBoundingClientRect() : rect;
+        
+        // Check if we're selecting a field (has a dot)
+        const dotIndex = textAfterTrigger.indexOf('.');
+        
+        if (dotIndex !== -1) {
+          // Step 2: Field selection
+          const nodeId = textAfterTrigger.substring(0, dotIndex);
+          const fieldQuery = textAfterTrigger.substring(dotIndex + 1);
+          
+          setAutocomplete({
+            show: true,
+            step: 'field',
+            fieldName,
+            selectedNode: nodeId,
+            query: fieldQuery,
+            cursorPosition: cursorPos,
+            triggerPosition: lastBraceIndex,
+            dropdownPosition: {
+              top: rect.bottom - containerRect.top + 5,
+              left: rect.left - containerRect.left
+            }
+          });
+        } else {
+          // Step 1: Node selection
+          setAutocomplete({
+            show: true,
+            step: 'node',
+            fieldName,
+            selectedNode: null,
+            query: textAfterTrigger,
+            cursorPosition: cursorPos,
+            triggerPosition: lastBraceIndex,
+            dropdownPosition: {
+              top: rect.bottom - containerRect.top + 5,
+              left: rect.left - containerRect.left
+            }
+          });
+        }
+        return;
+      }
+    }
+    
+    // Hide autocomplete if conditions not met
+    setAutocomplete(prev => ({ ...prev, show: false }));
+  }, [handleFieldChange]);
+
+  /**
+   * Handle node selection (Step 1)
+   * @param {string} nodeId - ID of the selected node
+   */
+  const handleNodeSelect = useCallback((nodeId) => {
+    const { fieldName, triggerPosition } = autocomplete;
+    const currentValue = fieldValues[fieldName];
+    
+    // Insert nodeId and a dot, keep cursor for field selection
+    const beforeTrigger = currentValue.substring(0, triggerPosition);
+    const afterCursor = currentValue.substring(autocomplete.cursorPosition);
+    const newValue = `${beforeTrigger}{{${nodeId}.${afterCursor}`;
+    const newCursorPos = triggerPosition + nodeId.length + 3; // {{ + nodeId + .
+    
+    handleFieldChange(fieldName, newValue);
+    
+    // Move to step 2: field selection
+    setAutocomplete(prev => ({
+      ...prev,
+      step: 'field',
+      selectedNode: nodeId,
+      query: '',
+      cursorPosition: newCursorPos
+    }));
+    
+    // Refocus and reposition cursor
+    setTimeout(() => {
+      const input = inputRefs.current[fieldName] || textareaRefs.current[fieldName];
+      if (input) {
+        input.focus();
+        input.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  }, [autocomplete, fieldValues, handleFieldChange]);
+
+  /**
+   * Handle field selection (Step 2)
+   * @param {string} fieldName - Name of the output field
+   */
+  const handleFieldSelect = useCallback((fieldName) => {
+    const { fieldName: inputFieldName, triggerPosition, selectedNode } = autocomplete;
+    const currentValue = fieldValues[inputFieldName];
+    
+    // Replace from {{ to after the dot
+    const beforeTrigger = currentValue.substring(0, triggerPosition);
+    const afterCursor = currentValue.substring(autocomplete.cursorPosition);
+    const newValue = `${beforeTrigger}{{${selectedNode}.${fieldName}}}${afterCursor}`;
+    
+    handleFieldChange(inputFieldName, newValue);
+    setAutocomplete(prev => ({ ...prev, show: false }));
+    
+    // Refocus the input
+    setTimeout(() => {
+      const input = inputRefs.current[inputFieldName] || textareaRefs.current[inputFieldName];
+      if (input) {
+        input.focus();
+        const newCursorPos = triggerPosition + selectedNode.length + fieldName.length + 5; // {{ + nodeId + . + field + }}
+        input.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  }, [autocomplete, fieldValues, handleFieldChange]);
+
+  /**
+   * Filter nodes based on autocomplete query
+   */
+  const filteredNodes = useMemo(() => {
+    if (!autocomplete.show || autocomplete.step !== 'node') return [];
+    
+    const query = autocomplete.query.toLowerCase();
+    const availableNodes = nodes.filter(node => node.id !== id); // Exclude current node
+    
+    if (availableNodes.length === 0) {
+      return [];
+    }
+    
+    return availableNodes
+      .filter(node => {
+        const nodeId = node.id.toLowerCase();
+        const nodeType = (node.type || 'unknown').toLowerCase();
+        return nodeId.includes(query) || nodeType.includes(query);
+      })
+      .slice(0, 10); // Limit to 10 results
+  }, [nodes, autocomplete, id]);
+
+  /**
+   * Get output fields for selected node
+   */
+  const availableFields = useMemo(() => {
+    if (!autocomplete.show || autocomplete.step !== 'field' || !autocomplete.selectedNode) {
+      return [];
+    }
+    
+    const selectedNode = nodes.find(n => n.id === autocomplete.selectedNode);
+    if (!selectedNode) return [];
+    
+    const nodeConfig = selectedNode.data?.config || {};
+    const outputs = nodeConfig.outputs || [];
+    
+    const query = autocomplete.query.toLowerCase();
+    return outputs.filter(output => 
+      output.name.toLowerCase().includes(query) || 
+      output.label.toLowerCase().includes(query)
+    );
+  }, [nodes, autocomplete]);
+
+  /**
+   * Close autocomplete on outside click
+   */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
+        setAutocomplete(prev => ({ ...prev, show: false }));
+      }
+    };
+
+    if (autocomplete.show) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [autocomplete.show]);
+
+  /**
+   * Handle keyboard navigation in autocomplete
+   */
+  const handleKeyDown = useCallback((e, fieldName) => {
+    if (autocomplete.show && autocomplete.fieldName === fieldName) {
+      if (e.key === 'Escape') {
+        setAutocomplete(prev => ({ ...prev, show: false }));
+        e.preventDefault();
+      }
+    }
+  }, [autocomplete]);
 
   /**
    * Calculate and update node dimensions based on auto-expanding fields
@@ -107,9 +399,13 @@ export const BaseNode = ({ id, data, config }) => {
             <label key={field.name} className="flex flex-col text-xs gap-0.5">
               {field.label}:
               <textarea
-                ref={(el) => { textareaRefs.current[field.name] = el; }}
+                ref={(el) => { 
+                  textareaRefs.current[field.name] = el;
+                  inputRefs.current[field.name] = el;
+                }}
                 value={value}
-                onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                onChange={(e) => handleInputChange(e, field.name)}
+                onKeyDown={(e) => handleKeyDown(e, field.name)}
                 placeholder={field.placeholder || ''}
                 className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all overflow-hidden"
                 style={{ minHeight: '36px' }}
@@ -122,8 +418,10 @@ export const BaseNode = ({ id, data, config }) => {
             {field.label}:
             <input
               type="text"
+              ref={(el) => { inputRefs.current[field.name] = el; }}
               value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              onChange={(e) => handleInputChange(e, field.name)}
+              onKeyDown={(e) => handleKeyDown(e, field.name)}
               placeholder={field.placeholder || ''}
               className="px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
@@ -135,9 +433,13 @@ export const BaseNode = ({ id, data, config }) => {
           <label key={field.name} className="flex flex-col text-xs gap-0.5">
             {field.label}:
             <textarea
-              ref={field.autoExpand ? (el) => { textareaRefs.current[field.name] = el; } : undefined}
+              ref={(el) => { 
+                if (field.autoExpand) textareaRefs.current[field.name] = el;
+                inputRefs.current[field.name] = el;
+              }}
               value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              onChange={(e) => handleInputChange(e, field.name)}
+              onKeyDown={(e) => handleKeyDown(e, field.name)}
               placeholder={field.placeholder || ''}
               rows={field.autoExpand ? undefined : (field.rows || 3)}
               className={`px-2 py-1.5 text-xs border border-gray-300 rounded-md w-full ${field.autoExpand ? 'resize-none overflow-hidden' : 'resize-y'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
@@ -242,40 +544,118 @@ export const BaseNode = ({ id, data, config }) => {
   };
 
   return (
-    <div 
-      className={`border border-gray-200 rounded-lg px-3 py-3 text-xs shadow-lg hover:shadow-xl transition-all duration-200 ${getBackgroundClass()}`}
-      style={{
-        ...customStyle,
-        width: `${nodeDimensions.width}px`,
-        minHeight: `${nodeDimensions.height}px`,
-        transition: 'width 0.2s ease-in-out, min-height 0.2s ease-in-out'
-      }}
-    >
-      {/* Render input handles (targets) */}
-      {renderHandles(config.handles?.filter(h => h.type === 'target'))}
+    <>
+      <div 
+        className={`relative border border-gray-200 rounded-lg px-3 py-3 text-xs shadow-lg hover:shadow-xl transition-all duration-200 ${getBackgroundClass()}`}
+        style={{
+          ...customStyle,
+          width: `${nodeDimensions.width}px`,
+          minHeight: `${nodeDimensions.height}px`,
+          transition: 'width 0.2s ease-in-out, min-height 0.2s ease-in-out'
+        }}
+      >
+        {/* Render static input handles (targets) */}
+        {renderHandles(config.handles?.filter(h => h.type === 'target'))}
+        
+        {/* Render dynamic handles */}
+        {renderHandles(dynamicHandles)}
 
-      {/* Node title */}
-      <div className="mb-2.5 font-semibold border-b border-gray-200 pb-2">
-        <span className="text-sm text-gray-800">{config.title}</span>
+        {/* Node title */}
+        <div className="mb-2.5 font-semibold border-b border-gray-200 pb-2">
+          <span className="text-sm text-gray-800">{config.title}</span>
+        </div>
+
+        {/* Node description (optional) */}
+        {config.description && (
+          <div className="mb-2.5 text-[11px] text-gray-500 italic">
+            <span>{config.description}</span>
+          </div>
+        )}
+
+        {/* Render fields */}
+        {config.fields && (
+          <div className="flex flex-col gap-1.5 relative">
+            {config.fields.map(field => renderField(field))}
+            
+            {/* Autocomplete Dropdown - positioned relative to field */}
+            {autocomplete.show && (
+              <div
+                ref={autocompleteRef}
+                className="absolute z-[9999] bg-white border border-gray-300 rounded-md shadow-xl max-h-60 overflow-y-auto"
+                style={{
+                  top: `${autocomplete.dropdownPosition.top}px`,
+                  left: `${autocomplete.dropdownPosition.left}px`,
+                  minWidth: '220px',
+                  maxWidth: '350px'
+                }}
+              >
+          {/* Step 1: Node Selection */}
+          {autocomplete.step === 'node' && (
+            <div className="py-1">
+              {filteredNodes.length > 0 ? (
+                filteredNodes.map((node) => (
+                  <button
+                    key={node.id}
+                    onClick={() => handleNodeSelect(node.id)}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="font-medium text-gray-800">{node.id}</div>
+                    <div className="text-[10px] text-gray-500">
+                      Type: {node.type || 'unknown'}
+                    </div>
+                  </button>
+                ))
+              ) : nodes.length <= 1 ? (
+                <div className="px-3 py-3 text-xs text-gray-500 text-center">
+                  <div className="text-orange-500 font-medium mb-1">⚠ No nodes available</div>
+                  <div>Add nodes to the canvas first</div>
+                </div>
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-500 italic">
+                  No matching nodes found
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Field Selection */}
+          {autocomplete.step === 'field' && (
+            <div className="py-1">
+              <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 text-[10px] text-gray-600 font-medium">
+                Select output field for: {autocomplete.selectedNode}
+              </div>
+              {availableFields.length > 0 ? (
+                availableFields.map((field) => (
+                  <button
+                    key={field.name}
+                    onClick={() => handleFieldSelect(field.name)}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors text-xs border-b border-gray-100 last:border-b-0"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="font-medium text-gray-800">{field.label}</div>
+                    <div className="text-[10px] text-gray-500">
+                      {field.name} • {field.type}
+                      {field.description && ` • ${field.description}`}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs text-red-500">
+                  No output fields defined for this node
+                </div>
+              )}
+            </div>
+          )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Render output handles (sources) */}
+        {renderHandles(config.handles?.filter(h => h.type === 'source'))}
       </div>
-
-      {/* Node description (optional) */}
-      {config.description && (
-        <div className="mb-2.5 text-[11px] text-gray-500 italic">
-          <span>{config.description}</span>
-        </div>
-      )}
-
-      {/* Render fields */}
-      {config.fields && (
-        <div className="flex flex-col gap-1.5">
-          {config.fields.map(field => renderField(field))}
-        </div>
-      )}
-
-      {/* Render output handles (sources) */}
-      {renderHandles(config.handles?.filter(h => h.type === 'source'))}
-    </div>
+    </>
   );
 };
 

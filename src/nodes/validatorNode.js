@@ -11,7 +11,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Validator Node Configuration
@@ -53,6 +53,11 @@ const validatorNodeConfig = createNodeConfig({
       placeholder: 'Maximum value'
     })
   ],
+  outputs: [
+    createOutput('valid', 'Valid Data', 'any', 'Data that passed validation'),
+    createOutput('invalid', 'Invalid Data', 'any', 'Data that failed validation'),
+    createOutput('result', 'Validation Result', 'boolean', 'Boolean validation result')
+  ],
   style: {
     backgroundColor: '#e8eaf6',
     minHeight: 140
@@ -63,7 +68,11 @@ const validatorNodeConfig = createNodeConfig({
  * ValidatorNode component
  */
 export const ValidatorNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={validatorNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: validatorNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={validatorNodeConfig} />;
 };
 
 export default ValidatorNode;

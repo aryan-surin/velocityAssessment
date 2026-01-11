@@ -1,7 +1,7 @@
 // llmNode.js
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle } from './nodeConfig';
+import { createNodeConfig, createHandle, createOutput } from './nodeConfig';
 
 /**
  * LLM Node Configuration
@@ -20,6 +20,10 @@ const llmNodeConfig = createNodeConfig({
     createHandle('source', 'response')
   ],
   fields: [],
+  outputs: [
+    createOutput('response', 'Response', 'string', 'LLM generated response'),
+    createOutput('text', 'Text Output', 'string', 'Response text content')
+  ],
   style: {
     backgroundColor: '#f3e5f5',
     minHeight: 100
@@ -30,5 +34,9 @@ const llmNodeConfig = createNodeConfig({
  * LLMNode component using BaseNode abstraction
  */
 export const LLMNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={llmNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: llmNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={llmNodeConfig} />;
 }

@@ -11,7 +11,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Conditional Node Configuration
@@ -44,6 +44,10 @@ const conditionalNodeConfig = createNodeConfig({
       placeholder: 'Value to compare'
     })
   ],
+  outputs: [
+    createOutput('true', 'True Branch', 'any', 'Data when condition is true'),
+    createOutput('false', 'False Branch', 'any', 'Data when condition is false')
+  ],
   style: {
     backgroundColor: '#fff9c4',
     minHeight: 110
@@ -54,7 +58,11 @@ const conditionalNodeConfig = createNodeConfig({
  * ConditionalNode component
  */
 export const ConditionalNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={conditionalNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: conditionalNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={conditionalNodeConfig} />;
 };
 
 export default ConditionalNode;

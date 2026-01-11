@@ -1,7 +1,7 @@
 // textNode.js
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Text Node Configuration
@@ -20,6 +20,10 @@ const textNodeConfig = createNodeConfig({
       autoExpand: true
     })
   ],
+  outputs: [
+    createOutput('text', 'Text Output', 'string', 'Processed text content'),
+    createOutput('output', 'Output', 'string', 'Final output text')
+  ],
   style: {
     backgroundColor: '#e8f5e9'
   }
@@ -29,5 +33,9 @@ const textNodeConfig = createNodeConfig({
  * TextNode component using BaseNode abstraction
  */
 export const TextNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={textNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: textNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={textNodeConfig} />;
 }

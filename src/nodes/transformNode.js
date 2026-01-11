@@ -11,7 +11,7 @@
  */
 
 import { BaseNode } from './BaseNode';
-import { createNodeConfig, createHandle, createField } from './nodeConfig';
+import { createNodeConfig, createHandle, createField, createOutput } from './nodeConfig';
 
 /**
  * Transform Node Configuration
@@ -40,6 +40,10 @@ const transformNodeConfig = createNodeConfig({
       rows: 3
     })
   ],
+  outputs: [
+    createOutput('output', 'Transformed Output', 'string', 'Transformed data result'),
+    createOutput('text', 'Text Result', 'string', 'Transformed text')
+  ],
   style: {
     backgroundColor: '#e1f5fe',
     minHeight: 140
@@ -50,7 +54,11 @@ const transformNodeConfig = createNodeConfig({
  * TransformNode component
  */
 export const TransformNode = ({ id, data }) => {
-  return <BaseNode id={id} data={data} config={transformNodeConfig} />;
+  const enrichedData = {
+    ...data,
+    config: transformNodeConfig
+  };
+  return <BaseNode id={id} data={enrichedData} config={transformNodeConfig} />;
 };
 
 export default TransformNode;
