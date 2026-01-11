@@ -220,6 +220,17 @@ export const BaseNode = ({ id, data, config }) => {
     const { fieldName, triggerPosition } = autocomplete;
     const currentValue = fieldValues[fieldName];
     
+    // Remove old edges created by variable builder before changing node selection
+    const oldVariables = parseVariables(currentValue);
+    if (oldVariables.length > 0) {
+      setEdges((edges) => 
+        edges.filter(edge => 
+          // Only remove edges created by variable builder (those targeting dynamic handles)
+          !oldVariables.some(v => edge.target === id && edge.targetHandle === `dynamic-${v.nodeId}`)
+        )
+      );
+    }
+    
     // Remove all existing variables (enforce single variable per field)
     const cleanValue = currentValue.replace(/\{\{[^}]+\}\}/g, '');
     
@@ -246,7 +257,7 @@ export const BaseNode = ({ id, data, config }) => {
         input.setSelectionRange(newCursorPos, newCursorPos);
       }
     }, 0);
-  }, [autocomplete, fieldValues, handleFieldChange]);
+  }, [autocomplete, fieldValues, handleFieldChange, parseVariables, id, setEdges]);
 
   /**
    * Handle field selection (Step 2)
